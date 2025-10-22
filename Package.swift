@@ -5,6 +5,10 @@ import PackageDescription
 
 let package = Package(
     name: "SF Buddy Package",
+    platforms: [
+        .macOS(.v15),
+        .iOS(.v18)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
@@ -12,12 +16,18 @@ let package = Package(
             targets: ["SF Buddy Package"]
         ),
     ],
+    dependencies: [
+        // Dependencies declare other packages that this package depends on.
+        .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols.git", from: "6.2.0")
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "SF Buddy Package"
+            name: "SF Buddy Package",
+            dependencies: [
+                .product(name: "SFSafeSymbols", package: "SFSafeSymbols")
+            ]
         ),
-
     ]
 )
