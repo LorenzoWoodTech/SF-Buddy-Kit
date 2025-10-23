@@ -60,6 +60,9 @@ public class SFSymbolService: ObservableObject {
 
     private let claudeURL = "https://api.anthropic.com/v1/messages"
     
+    // Callback for tracking symbol actions - to be set by the app
+    public var trackSymbolActionCallback: ((String, SymbolAction, String) -> Void)?
+    
     #if os(macOS)
     private static let nonExistentSymbolPlaceholderTiff: Data? = {
         let nonExistentSymbolName = "com.apple.NonExistentInternalSymbolSFBuddy"
@@ -83,6 +86,10 @@ public class SFSymbolService: ObservableObject {
             print("[SFSymbolService] WARNING: Could not generate non-existent symbol placeholder TIFF. Validation may be affected.")
         }
         #endif
+    }
+    
+    public func trackSymbolAction(symbolName: String, action: SymbolAction, searchTerm: String) {
+        trackSymbolActionCallback?(symbolName, action, searchTerm)
     }
     
     public func processSelectedText() async {
