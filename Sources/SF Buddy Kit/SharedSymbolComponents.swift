@@ -1,6 +1,6 @@
 //
 //  SharedSymbolComponents.swift
-//  SF Buddy Package
+//  SF Buddy Kit
 //
 //  Shared components for symbol pickers to avoid duplication and naming conflicts
 //

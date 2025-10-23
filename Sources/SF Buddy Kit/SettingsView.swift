@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  SF Buddy Package
+//  SF Buddy Kit
 //
 //  Comprehensive settings view for the SF Symbol package
 //
@@ -103,7 +103,7 @@ public struct SettingsView: View {
                 
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
-                    LabeledContent("Package", value: "SF Buddy Package")
+                    LabeledContent("Package", value: "SF Buddy Kit")
                 }
             }
             .formStyle(.grouped)

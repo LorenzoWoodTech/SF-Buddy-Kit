@@ -1,6 +1,6 @@
 //
 //  SFSymbolService.swift
-//  SF Buddy Package
+//  SF Buddy Kit
 //
 
 import Foundation

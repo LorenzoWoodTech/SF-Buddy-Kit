@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SF Buddy Package",
+    name: "SF Buddy Kit",
     platforms: [
         .macOS(.v15),
         .iOS(.v18)
@@ -12,8 +12,8 @@ let package = Package(
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "SF Buddy Package",
-            targets: ["SF Buddy Package"]
+            name: "SF Buddy Kit",
+            targets: ["SF Buddy Kit"]
         ),
     ],
     dependencies: [
@@ -24,7 +24,7 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "SF Buddy Package",
+            name: "SF Buddy Kit",
             dependencies: [
                 .product(name: "SFSafeSymbols", package: "SFSafeSymbols")
             ]

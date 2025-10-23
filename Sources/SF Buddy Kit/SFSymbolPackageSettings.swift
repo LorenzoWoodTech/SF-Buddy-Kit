@@ -1,6 +1,6 @@
 //
 //  SFSymbolPackageSettings.swift
-//  SF Buddy Package
+//  SF Buddy Kit
 //
 //  Clean settings for the SF Symbol package
 //

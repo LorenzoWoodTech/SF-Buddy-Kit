@@ -1,6 +1,6 @@
 //
 //  SFSymbolVegasSettings.swift
-//  SF Buddy Package
+//  SF Buddy Kit
 //
 //  Vegas animation settings for the SF Symbol package
 //
