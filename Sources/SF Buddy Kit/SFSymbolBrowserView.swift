@@ -254,7 +254,17 @@ public struct SFSymbolBrowserView: View {
     private var symbolGridView: some View {
         ScrollView {
             if !filteredSymbols.isEmpty {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: gridSize.buttonSize.min, maximum: gridSize.buttonSize.max), spacing: 10), count: gridSize.columnCount), spacing: 10) {
+                let columns: [GridItem] = Array(
+                    repeating: GridItem(
+                        .flexible(
+                            minimum: gridSize.buttonSize.min,
+                            maximum: gridSize.buttonSize.max
+                        ),
+                        spacing: 10
+                    ),
+                    count: gridSize.columnCount
+                )
+                LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(filteredSymbols, id: \.self) { symbolName in
                         BrowserSymbolGridButton(
                             symbolName: symbolName,
@@ -471,41 +481,19 @@ struct BrowserSymbolGridButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: symbolName)
-                    .font(.system(size: gridSize.symbolSize))
-                    .foregroundColor(isHovered || isSelected ? .white : (vegasMode ? randomColor : symbolColor))
-                    .symbolRenderingMode(swiftUIRenderingMode)
-                    .frame(width: gridSize.symbolSize + 12, height: gridSize.symbolSize + 12)
-                    .scaleEffect(vegasMode ? animationScale : 1)
-                    .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
-                    .offset(x: vegasMode ? animationOffset : 0)
-                
-                if gridSize.showNames {
-                    Text(symbolName)
-                        .font(.caption2)
-                        .foregroundColor(isHovered || isSelected ? .white : .secondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .frame(minWidth: gridSize.buttonSize.min, maxWidth: gridSize.buttonSize.max,
-                   minHeight: gridSize.buttonSize.height, maxHeight: gridSize.buttonSize.height)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isHovered || isSelected ? Color.accentColor : Color.clear)
-                    .opacity(vegasMode ? 0.8 : 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3),
-                           lineWidth: isSelected ? 2 : 1)
-            )
+            symbolContent
+                .frame(
+                    minWidth: gridSize.buttonSize.min,
+                    maxWidth: gridSize.buttonSize.max,
+                    minHeight: gridSize.buttonSize.height,
+                    maxHeight: gridSize.buttonSize.height
+                )
+                .background(backgroundShape)
+                .overlay(overlayShape)
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.easeInOut(duration: 0)) {
                 isHovered = hovering
             }
         }
@@ -525,6 +513,51 @@ struct BrowserSymbolGridButton: View {
         .onChange(of: vegasSettings.vegasColorCycleSpeed) { _, _ in if vegasMode { restartVegasAnimations() } }
         .onChange(of: vegasSettings.vegasIntensity) { _, _ in if vegasMode { restartVegasAnimations() } }
         .onChange(of: vegasSettings.vegasRotationEnabled) { _, _ in if vegasMode { restartVegasAnimations() } }
+        .onDisappear {
+            stopVegasAnimations()
+        }
+    }
+    
+    private var effectiveSymbolColor: Color {
+        (isHovered || isSelected) ? .white : (vegasMode ? randomColor : symbolColor)
+    }
+    
+    @ViewBuilder
+    private var symbolContent: some View {
+        let mode = swiftUIRenderingMode
+        VStack(spacing: 4) {
+            Image(systemName: symbolName)
+                .font(.system(size: gridSize.symbolSize))
+                .foregroundColor(effectiveSymbolColor)
+                .symbolRenderingMode(mode)
+                .frame(width: gridSize.symbolSize + 12, height: gridSize.symbolSize + 12)
+                .scaleEffect(vegasMode ? animationScale : 1)
+                .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
+                .offset(x: vegasMode ? animationOffset : 0)
+            
+            if gridSize.showNames {
+                Text(symbolName)
+                    .font(.caption2)
+                    .foregroundColor(isHovered || isSelected ? .white : .secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+    
+    private var backgroundShape: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(isHovered || isSelected ? Color.accentColor : Color.clear)
+            .opacity(vegasMode ? 0.8 : 1)
+    }
+    
+    private var overlayShape: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .stroke(
+                isSelected ? Color.accentColor : Color.secondary.opacity(0.1),
+                lineWidth: isSelected ? 2 : 1
+            )
     }
     
     private var swiftUIRenderingMode: SymbolRenderingMode {
@@ -1033,3 +1066,4 @@ extension String {
     SFSymbolBrowserView(selectedSymbol: .constant(nil))
         .environment(SFSymbolVegasSettings.shared)
 }
+

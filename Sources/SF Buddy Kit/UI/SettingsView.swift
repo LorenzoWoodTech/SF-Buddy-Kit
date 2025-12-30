@@ -22,7 +22,7 @@ public struct SettingsView: View {
             Text("SF Buddy Settings")
                 .font(.title2)
                 .padding()
-            
+        
             Form {
                 Section("Claude API") {
                     SecureField("API Key", text: $symbolService.claudeAPIKey)
