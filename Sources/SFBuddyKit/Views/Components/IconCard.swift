@@ -2,7 +2,7 @@
 //  IconCard.swift
 //  SFBuddyKit
 //
-//  SF Symbol card with hover-to-reveal variant functionality
+//  SF Symbol card with tap-to-switch variant functionality
 //
 
 import SwiftUI
@@ -25,7 +25,6 @@ struct IconCard: View {
     
     @Environment(VegasSettings.self) private var appSettings
     @State private var isHovered = false
-    @State private var isPressed = false
     @State private var currentVariantIndex: Int = 0
     @State private var animationOffset: CGFloat = 0
     @State private var animationRotation: Double = 0
@@ -33,6 +32,8 @@ struct IconCard: View {
     @State private var randomColor: Color = .primary
     @State private var vegasTimer: Timer?
     @State private var showCopyFeedback = false
+    @State private var isDraggingOnIndicator = false
+    @State private var pressStartedOnIndicator = false
     
     private var hasVariants: Bool {
         !availableVariants.isEmpty
@@ -72,97 +73,81 @@ struct IconCard: View {
     }
     
     var body: some View {
-        Button {
-            action()
-            
-            // Show copy feedback
-            withAnimation(.spring(duration: 0.3)) {
-                showCopyFeedback = true
-            }
-            
-            Task {
-                try? await Task.sleep(for: .seconds(0.5))
-                await MainActor.run {
-                    withAnimation(.spring(duration: 0.3)) {
-                        showCopyFeedback = false
-                    }
-                }
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 4) {
-                GeometryReader { geometry in
-                    ZStack {
-                        cardContent(availableSize: geometry.size)
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                        
-                        // Corner variant indicators
-                        if hasVariants {
-                            variantIndicators
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
-                        
-                        // Copy feedback overlay
-                        if showCopyFeedback {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(.green.opacity(0.2))
-                                .overlay(
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: geometry.size.width * 0.4))
-                                        .foregroundStyle(.green)
-                                        .symbolEffect(.bounce, value: showCopyFeedback)
-                                )
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    #if os(macOS)
-                    .onContinuousHover { phase in
-                        handleHover(phase: phase, in: geometry.size)
-                    }
-                    #else
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                handleTouch(location: value.location, in: geometry.size)
+        VStack(alignment: .leading, spacing: 4) {
+            GeometryReader { geometry in
+                ZStack {
+                    // Main card content
+                    cardContent(availableSize: geometry.size)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            // Only trigger action if we didn't start on an indicator
+                            if !pressStartedOnIndicator {
+                                handleMainAction()
                             }
-                    )
-                    #endif
+                        }
+                    
+                    // Variant indicators (always visible)
+                    if hasVariants {
+                        variantIndicators(in: geometry.size)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    
+                    // Copy feedback overlay
+                    if showCopyFeedback {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(.green.opacity(0.2))
+                            .overlay(
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: geometry.size.width * 0.4))
+                                    .foregroundStyle(.green)
+                                    .symbolEffect(.bounce, value: showCopyFeedback)
+                            )
+                            .transition(.scale.combined(with: .opacity))
+                            .allowsHitTesting(false)
+                    }
                 }
-                .aspectRatio(1.0, contentMode: .fit)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.3)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(symbolColor.opacity(isSelected ? 0.12 : 0))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(strokeColor, lineWidth: strokeWidth)
-                )
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                
-                // Optional title below card
-                if showTitle {
-                    Text(currentVariant.symbolName)
-                        .font(.callout)
-                        .lineLimit(1)
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                #if os(macOS)
+                .onContinuousHover { phase in
+                    switch phase {
+                    case .active:
+                        isHovered = true
+                        onHover(true)
+                    case .ended:
+                        isHovered = false
+                        onHover(false)
+                    }
                 }
+                #endif
+            }
+            .aspectRatio(1.0, contentMode: .fit)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .opacity(0.3)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(symbolColor.opacity(isSelected ? 0.12 : 0))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(strokeColor, lineWidth: strokeWidth)
+            )
+            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            .scaleEffect(isHovered ? 1.05 : 1.0)
+            .animation(.spring(duration: 0.25), value: isHovered)
+            .animation(.easeInOut(duration: 0.2), value: isSelected)
+            
+            // Optional title below card
+            if showTitle {
+                Text(currentVariant.symbolName)
+                    .font(.callout)
+                    .lineLimit(1)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.easeOut(duration: 0.1), value: isPressed)
-        .animation(.spring(duration: 0.25), value: isHovered)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressed = true }
-                .onEnded { _ in isPressed = false }
-        )
         .onAppear {
             if vegasMode {
                 startVegasAnimations()
@@ -192,71 +177,145 @@ struct IconCard: View {
         }
     }
     
-    // MARK: - Variant Indicators (Corner Positioning)
+    // MARK: - Variant Indicators
     @ViewBuilder
-    private var variantIndicators: some View {
+    private func variantIndicators(in size: CGSize) -> some View {
         ZStack {
             ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
                 if let badgeIcon = variant.badgeIcon {
+                    let alignment = cornerAlignment(for: index, variant: variant)
+                    let hitTestSize: CGFloat = 32
+                    
                     Image(systemName: badgeIcon)
                         .font(.system(size: indicatorSize))
-                        .foregroundStyle(index == currentVariantIndex ? .primary : .tertiary)
+                        .foregroundStyle(index == currentVariantIndex ? .primary : .secondary)
                         .scaleEffect(index == currentVariantIndex ? 1.3 : 1.0)
                         .animation(.spring(duration: 0.2), value: currentVariantIndex)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: cornerAlignment(for: index))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
                         .padding(8)
-                        .opacity(isHovered ? 1 : 0.4)
+                        .contentShape(Rectangle().size(width: hitTestSize, height: hitTestSize))
+                        .onTapGesture {
+                            withAnimation(.spring(duration: 0.2)) {
+                                currentVariantIndex = index
+                            }
+                            pressStartedOnIndicator = true
+                            
+                            #if os(macOS)
+                            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+                            #endif
+                            
+                            // Reset flag after a short delay
+                            Task {
+                                try? await Task.sleep(for: .milliseconds(100))
+                                pressStartedOnIndicator = false
+                            }
+                        }
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    if !isDraggingOnIndicator {
+                                        isDraggingOnIndicator = true
+                                        pressStartedOnIndicator = true
+                                    }
+                                    
+                                    // Check if we're over a different indicator
+                                    if let newIndex = findIndicatorAt(location: value.location, in: size) {
+                                        if newIndex != currentVariantIndex {
+                                            withAnimation(.spring(duration: 0.15)) {
+                                                currentVariantIndex = newIndex
+                                            }
+                                            
+                                            #if os(macOS)
+                                            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+                                            #endif
+                                        }
+                                    }
+                                }
+                                .onEnded { _ in
+                                    isDraggingOnIndicator = false
+                                    Task {
+                                        try? await Task.sleep(for: .milliseconds(100))
+                                        pressStartedOnIndicator = false
+                                    }
+                                }
+                        )
                 }
             }
         }
     }
     
     private var indicatorSize: CGFloat {
-        // Scale indicator size based on grid scale
         return 10 + (gridScale * 4)
     }
     
-    private func cornerAlignment(for index: Int) -> Alignment {
-        // Distribute variants around corners clockwise from top-left
-        let positions: [Alignment] = [.topLeading, .topTrailing, .bottomTrailing, .bottomLeading]
-        return positions[index % positions.count]
-    }
-    
-    // MARK: - Hover/Touch Handling
-    #if os(macOS)
-    private func handleHover(phase: HoverPhase, in size: CGSize) {
-        switch phase {
-        case .active(let location):
-            isHovered = true
-            onHover(true)
-            updateVariantFromLocation(location, in: size)
-            
-        case .ended:
-            isHovered = false
-            onHover(false)
-            // Reset to base variant when hover ends
-            currentVariantIndex = 0
+    private func cornerAlignment(for index: Int, variant: SymbolVariant) -> Alignment {
+        // Organize by variant type:
+        // - Base: top-left
+        // - Fill: bottom-left
+        // - Badges: right side (top-right, bottom-right, then wrap)
+        
+        switch variant.variantType {
+        case .base:
+            return .topLeading
+        case .fill:
+            return .bottomLeading
+        case .badge:
+            // Count how many badge variants come before this one
+            let badgeIndex = availableVariants.prefix(index).filter { $0.variantType == .badge }.count
+            switch badgeIndex {
+            case 0: return .topTrailing
+            case 1: return .bottomTrailing
+            case 2: return .topLeading // Wrap to left side if more than 2 badges
+            default: return .bottomLeading // Continue wrapping
+            }
         }
     }
-    #else
-    private func handleTouch(location: CGPoint, in size: CGSize) {
-        isHovered = true
-        updateVariantFromLocation(location, in: size)
-    }
-    #endif
     
-    private func updateVariantFromLocation(_ location: CGPoint, in size: CGSize) {
-        guard hasVariants else { return }
+    private func findIndicatorAt(location: CGPoint, in size: CGSize) -> Int? {
+        let indicatorHitSize: CGFloat = 32
+        let padding: CGFloat = 8
         
-        let segmentWidth = size.width / CGFloat(availableVariants.count)
-        let newIndex = min(Int(location.x / segmentWidth), availableVariants.count - 1)
-        
-        if newIndex != currentVariantIndex && newIndex >= 0 {
-            currentVariantIndex = newIndex
+        for (index, variant) in availableVariants.enumerated() {
+            let alignment = cornerAlignment(for: index, variant: variant)
             
-            #if os(macOS)
-            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-            #endif
+            var indicatorRect: CGRect
+            switch alignment {
+            case .topLeading:
+                indicatorRect = CGRect(x: 0, y: 0, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
+            case .topTrailing:
+                indicatorRect = CGRect(x: size.width - indicatorHitSize - padding, y: 0, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
+            case .bottomTrailing:
+                indicatorRect = CGRect(x: size.width - indicatorHitSize - padding, y: size.height - indicatorHitSize - padding, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
+            case .bottomLeading:
+                indicatorRect = CGRect(x: 0, y: size.height - indicatorHitSize - padding, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
+            default:
+                continue
+            }
+            
+            if indicatorRect.contains(location) {
+                return index
+            }
+        }
+        
+        return nil
+    }
+    
+    // MARK: - Main Action
+    private func handleMainAction() {
+        action()
+        
+        // Show copy feedback
+        withAnimation(.spring(duration: 0.3)) {
+            showCopyFeedback = true
+        }
+        
+        Task {
+            try? await Task.sleep(for: .seconds(0.5))
+            await MainActor.run {
+                withAnimation(.spring(duration: 0.3)) {
+                    showCopyFeedback = false
+                }
+            }
         }
     }
     
@@ -281,7 +340,6 @@ struct IconCard: View {
     
     // MARK: - Computed Properties
     private var cardPadding: CGFloat {
-        // Scale padding from 8-16 based on gridScale
         8 + (gridScale * 8)
     }
     
