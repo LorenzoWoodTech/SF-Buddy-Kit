@@ -345,7 +345,7 @@ public struct SymbolPickerView: View {
                 Divider()
                 
                 Section("Model") {
-                    ForEach(SFSymbolService.ModelProvider.allCases) { provider in
+                    ForEach(ModelProvider.allCases) { provider in
                         Button {
                             packageSettings.modelProvider = provider
                         } label: {
