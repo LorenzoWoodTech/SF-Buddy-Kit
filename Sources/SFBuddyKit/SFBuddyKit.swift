@@ -38,3 +38,14 @@ public struct SymbolActionRecord: Codable, Hashable {
         self.date = date
     }
 }
+
+// MARK: - Symbol Suggestion
+
+public struct SFSymbolSuggestion: Identifiable {
+    public let id = UUID()
+    public let name: String
+    
+    public init(name: String) {
+        self.name = name
+    }
+}

@@ -120,10 +120,7 @@ struct IconCard: View {
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            // Only trigger action if we didn't start on an indicator
-                            if !pressStartedOnIndicator {
-                                handleMainAction()
-                            }
+                            handleMainAction()
                         }
                     
                     // Copy feedback overlay
@@ -306,7 +303,7 @@ struct IconCard: View {
         }
         
         Task {
-            try? await Task.sleep(for: .seconds(0.5))
+            try? await Task.sleep(for: .seconds(1.2))
             await MainActor.run {
                 withAnimation(.spring(duration: 0.3)) {
                     showCopyFeedback = false
@@ -321,17 +318,30 @@ struct IconCard: View {
         let padding = cardPadding
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
-        Image(systemName: displayVariant.symbolName)
-            .font(.system(size: contentSize * 0.65))
-            .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
-            .symbolRenderingMode(renderingMode.swiftUIMode)
-            .scaleEffect(vegasMode ? animationScale : 1)
-            .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
-            .offset(x: vegasMode ? animationOffset : 0)
-            .modifier(VegasSymbolEffects(isActive: vegasMode))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(padding)
-            .id(displayVariant.id)
+        ZStack {
+            // Main symbol
+            Image(systemName: displayVariant.symbolName)
+                .font(.system(size: contentSize * 0.65))
+                .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
+                .symbolRenderingMode(renderingMode.swiftUIMode)
+                .scaleEffect(vegasMode ? animationScale : 1)
+                .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
+                .offset(x: vegasMode ? animationOffset : 0)
+                .modifier(VegasSymbolEffects(isActive: vegasMode))
+                .opacity(showCopyFeedback ? 0.2 : 1.0)
+                .id(displayVariant.id)
+            
+            // Copy feedback overlay
+            if showCopyFeedback {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: contentSize * 0.5))
+                    .foregroundStyle(.green)
+                    .symbolEffect(.bounce, value: showCopyFeedback)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(padding)
     }
     
     // MARK: - Computed Properties

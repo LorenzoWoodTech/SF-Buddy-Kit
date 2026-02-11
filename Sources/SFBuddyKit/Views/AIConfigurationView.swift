@@ -11,6 +11,16 @@ struct AIConfigurationView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var symbolService = SFSymbolService.shared
     @State private var packageSettings = SFSymbolPackageSettings.shared
+    @State private var isTestingAPIKey = false
+    @State private var apiKeyStatus: APIKeyStatus = .untested
+    @State private var apiKeyError: String?
+    
+    enum APIKeyStatus {
+        case untested
+        case valid
+        case invalid
+        case testing
+    }
     
     var body: some View {
         NavigationStack {
@@ -30,13 +40,23 @@ struct AIConfigurationView: View {
                         }
                     }
                     .pickerStyle(.inline)
+                    .onChange(of: packageSettings.modelProvider) { _, _ in
+                        apiKeyStatus = .untested
+                        apiKeyError = nil
+                    }
                     
                     if packageSettings.modelProvider == .apple {
                         HStack {
                             Text("Status")
                             Spacer()
-                            Text(symbolService.appleIntelligenceStatusMessage())
-                                .foregroundStyle(symbolService.isAppleIntelligenceAvailable() ? .green : .secondary)
+                            HStack(spacing: 4) {
+                                if symbolService.isAppleIntelligenceAvailable() {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                                Text(symbolService.appleIntelligenceStatusMessage())
+                                    .foregroundStyle(symbolService.isAppleIntelligenceAvailable() ? .green : .secondary)
+                            }
                         }
                     }
                 } header: {
@@ -56,8 +76,59 @@ struct AIConfigurationView: View {
                 // API Settings (only show for Claude)
                 if packageSettings.modelProvider == .claude {
                     Section {
-                        SecureField("Anthropic API Key", text: $symbolService.claudeAPIKey)
-                            .textContentType(.password)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                SecureField("Anthropic API Key", text: $symbolService.claudeAPIKey)
+                                    .textContentType(.password)
+                                    .onChange(of: symbolService.claudeAPIKey) { _, _ in
+                                        apiKeyStatus = .untested
+                                        apiKeyError = nil
+                                    }
+                                
+                                Button {
+                                    testAPIKey()
+                                } label: {
+                                    if isTestingAPIKey {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                    } else {
+                                        Text("Test")
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(symbolService.claudeAPIKey.isEmpty || isTestingAPIKey)
+                            }
+                            
+                            // Status indicator
+                            switch apiKeyStatus {
+                            case .untested:
+                                if !symbolService.claudeAPIKey.isEmpty {
+                                    Label("API key not tested", systemImage: "questionmark.circle")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            case .testing:
+                                Label("Testing API key...", systemImage: "ellipsis.circle")
+                                    .font(.caption)
+                                    .foregroundStyle(.blue)
+                            case .valid:
+                                Label("API key is valid", systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
+                            case .invalid:
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Label("API key is invalid", systemImage: "xmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.red)
+                                    if let error = apiKeyError {
+                                        Text(error)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
                         
                         Picker("AI Model", selection: $packageSettings.selectedModel) {
                             ForEach(ClaudeModel.allCases) { model in
@@ -78,7 +149,7 @@ struct AIConfigurationView: View {
                     } header: {
                         Text("Claude API Settings")
                     } footer: {
-                        Text("Create an API key at console.anthropic.com")
+                        Text("Create an API key at console.anthropic.com. Click 'Test' to verify your key.")
                     }
                 }
                 
@@ -94,6 +165,7 @@ struct AIConfigurationView: View {
                     Text("Number of symbol suggestions to generate")
                 }
             }
+            .formStyle(.grouped)
             .navigationTitle("AI Configuration")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -102,7 +174,7 @@ struct AIConfigurationView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         // Clear error if configuration looks good
-                        if packageSettings.modelProvider == .claude && !symbolService.claudeAPIKey.isEmpty {
+                        if packageSettings.modelProvider == .claude && !symbolService.claudeAPIKey.isEmpty && apiKeyStatus == .valid {
                             symbolService.currentError = .none
                         } else if packageSettings.modelProvider == .apple && symbolService.isAppleIntelligenceAvailable() {
                             symbolService.currentError = .none
@@ -119,6 +191,100 @@ struct AIConfigurationView: View {
             }
         }
     }
+    
+    private func testAPIKey() {
+        guard !symbolService.claudeAPIKey.isEmpty else { return }
+        
+        apiKeyStatus = .testing
+        isTestingAPIKey = true
+        apiKeyError = nil
+        
+        Task {
+            do {
+                // Make a minimal test request to Claude
+                let result = try await testClaudeAPIKey()
+                
+                await MainActor.run {
+                    if result {
+                        apiKeyStatus = .valid
+                        symbolService.currentError = .none
+                    } else {
+                        apiKeyStatus = .invalid
+                        apiKeyError = "Invalid response from API"
+                    }
+                    isTestingAPIKey = false
+                }
+            } catch {
+                await MainActor.run {
+                    apiKeyStatus = .invalid
+                    
+                    // Parse error message
+                    if let apiError = error as? TestAPIError {
+                        switch apiError {
+                        case .authenticationError:
+                            apiKeyError = "Authentication failed. Check your API key."
+                        case .networkError(let message):
+                            apiKeyError = message
+                        case .unknownError(let message):
+                            apiKeyError = message
+                        }
+                    } else {
+                        apiKeyError = error.localizedDescription
+                    }
+                    
+                    isTestingAPIKey = false
+                }
+            }
+        }
+    }
+    
+    private func testClaudeAPIKey() async throws -> Bool {
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            throw TestAPIError.networkError("Invalid URL")
+        }
+        
+        // Minimal test request
+        let requestBody: [String: Any] = [
+            "model": packageSettings.selectedModel.rawValue,
+            "max_tokens": 10,
+            "messages": [
+                [
+                    "role": "user",
+                    "content": "test"
+                ]
+            ]
+        ]
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(symbolService.claudeAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 10
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw TestAPIError.networkError("Invalid response")
+        }
+        
+        if httpResponse.statusCode == 200 {
+            return true
+        } else if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+            throw TestAPIError.authenticationError
+        } else {
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw TestAPIError.unknownError("HTTP \(httpResponse.statusCode): \(errorMessage)")
+        }
+    }
+}
+
+enum TestAPIError: Error {
+    case authenticationError
+    case networkError(String)
+    case unknownError(String)
 }
 
 #Preview {

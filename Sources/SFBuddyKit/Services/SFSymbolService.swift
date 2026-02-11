@@ -18,8 +18,8 @@ import FoundationModels
 #endif
 
 @MainActor
-class SFSymbolService: ObservableObject {
-    static let shared = SFSymbolService()
+public class SFSymbolService: ObservableObject {
+    public static let shared = SFSymbolService()
     private static let userDefaultsAPIKey = "ClaudeAPIKey"
     
     // MARK: - Model Provider Configuration
@@ -87,15 +87,15 @@ class SFSymbolService: ObservableObject {
         }
     }
 
-    @Published var suggestedSymbols: [SFSymbolSuggestion] = []
-    @Published var isProcessing = false
-    @Published var lastProcessedText = ""
-    @Published var currentRenderingMode: SymbolRenderingMode = .automatic
-    @Published var invalidSymbolNamesFromClaude: [String] = []
+    @Published public var suggestedSymbols: [SFSymbolSuggestion] = []
+    @Published public var isProcessing = false
+    @Published public var lastProcessedText = ""
+    @Published public var currentRenderingMode: SymbolRenderingMode = .automatic
+    @Published public var invalidSymbolNamesFromClaude: [String] = []
     
-    @Published var currentError: AIServiceError = .none
+    @Published public var currentError: AIServiceError = .none
     
-    @Published var claudeAPIKey: String {
+    @Published public var claudeAPIKey: String {
         didSet {
             UserDefaults.standard.set(claudeAPIKey, forKey: SFSymbolService.userDefaultsAPIKey)
             print("[SFSymbolService] API Key updated and saved to UserDefaults.")
@@ -104,7 +104,9 @@ class SFSymbolService: ObservableObject {
             }
         }
     }
-    @Published var apiKeyMissingOrInvalid: Bool = false
+    @Published public var apiKeyMissingOrInvalid: Bool = false
+    
+    public var trackSymbolActionCallback: ((String, SymbolAction, String) -> Void)?
 
     private let claudeURL = "https://api.anthropic.com/v1/messages"
     
@@ -158,7 +160,7 @@ class SFSymbolService: ObservableObject {
         }
     }
     
-    func processSelectedText() async {
+    public func processSelectedText() async {
         #if os(macOS)
         print("[SFSymbolService] processSelectedText started.")
         
@@ -204,7 +206,7 @@ class SFSymbolService: ObservableObject {
     }
     
     /// Process text for AI symbol suggestions (available on all platforms)
-    func processText(_ text: String) async {
+    public func processText(_ text: String) async {
         print("[SFSymbolService] processText started for: '\(text)'")
         
         // Better error handling
@@ -232,7 +234,7 @@ class SFSymbolService: ObservableObject {
         print("[SFSymbolService] processText finished. Suggested symbols count: \(suggestedSymbols.count), Invalid names: \(invalidSymbolNamesFromClaude.count)")
     }
     
-    func searchSymbols(for text: String) async {
+    public func searchSymbols(for text: String) async {
         await processText(text)
     }
     
@@ -609,7 +611,7 @@ class SFSymbolService: ObservableObject {
         }
     }
     
-    func replaceTextWithSymbol(_ symbolName: String) {
+    public func replaceTextWithSymbol(_ symbolName: String) {
         #if os(macOS)
         print("[SFSymbolService] Copying to pasteboard: \(symbolName)")
         let pasteboard = NSPasteboard.general
@@ -621,6 +623,10 @@ class SFSymbolService: ObservableObject {
         UIPasteboard.general.string = symbolName
         print("[SFSymbolService] \(symbolName) copied to pasteboard.")
         #endif
+    }
+    
+    public func trackSymbolAction(symbolName: String, action: SymbolAction, searchTerm: String) {
+        trackSymbolActionCallback?(symbolName, action, searchTerm)
     }
 }
 
@@ -653,11 +659,6 @@ enum APIError: Error {
 
 extension Notification.Name {
     static let showSymbolPicker = Notification.Name("showSymbolPicker")
-}
-
-struct SFSymbolSuggestion: Identifiable {
-    let id = UUID()
-    let name: String
 }
 
 // Define the response structure for Apple Intelligence

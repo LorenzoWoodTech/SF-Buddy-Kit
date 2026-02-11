@@ -101,16 +101,23 @@ public struct SymbolPickerView: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if let displayName = hoveredSymbolName ?? justCopiedSymbolName {
+                    if let displayName = justCopiedSymbolName ?? hoveredSymbolName {
                         HStack {
                             Spacer()
-                            Text(displayName)
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.primary)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+                            HStack(spacing: 6) {
+                                if justCopiedSymbolName != nil {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.caption)
+                                }
+                                Text(justCopiedSymbolName != nil ? "Copied '\(displayName)' to clipboard" : displayName)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.primary)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
                             Spacer()
                         }
                         .padding(.bottom, 12)
@@ -284,9 +291,27 @@ public struct SymbolPickerView: View {
             .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             
+            // Grid size slider with icons
+            HStack(spacing: 8) {
+                Image(systemName: "square.grid.3x3")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Slider(value: $gridScale, in: 0...1)
+                    .frame(width: 80)
+                
+                Image(systemName: "square.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(height: controlHeight)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+            
             Spacer()
             
-            // Show Titles Toggle (now a menu)
+            // Options Menu (ellipsis)
             Menu {
                 Button {
                     withAnimation(.spring(duration: 0.3)) {
@@ -315,10 +340,53 @@ public struct SymbolPickerView: View {
                         }
                     }
                 }
+                
+                Divider()
+                
+                Section("AI Model") {
+                    Picker("Model", selection: Binding(
+                        get: { 
+                            if SFSymbolPackageSettings.shared.modelProvider == .apple {
+                                return "apple"
+                            } else {
+                                return SFSymbolPackageSettings.shared.selectedModel.rawValue
+                            }
+                        },
+                        set: { newValue in
+                            if newValue == "apple" {
+                                SFSymbolPackageSettings.shared.modelProvider = .apple
+                            } else {
+                                SFSymbolPackageSettings.shared.modelProvider = .claude
+                                if let model = ClaudeModel(rawValue: newValue) {
+                                    SFSymbolPackageSettings.shared.selectedModel = model
+                                }
+                            }
+                        }
+                    )) {
+                        Text("Foundation Model (Local)")
+                            .tag("apple")
+                        
+                        Divider()
+                        
+                        ForEach(ClaudeModel.allCases) { model in
+                            Text(model.displayName)
+                                .tag(model.rawValue)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                }
+                
+                Divider()
+                
+                Button {
+                    showingSettings = true
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
             } label: {
-                Image(systemName: "textformat")
+                Image(systemName: "ellipsis")
                     .font(.body)
-                    .foregroundStyle(showTitles ? Color.accentColor : .secondary)
+                    .foregroundStyle(.secondary)
                     .frame(height: controlHeight)
                     .contentShape(Rectangle())
             }
@@ -328,24 +396,9 @@ public struct SymbolPickerView: View {
             .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             .help("Display options")
-            
-            // Grid size slider with icons
-            HStack(spacing: 8) {
-                Image(systemName: "square.grid.3x3")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                Slider(value: $gridScale, in: 0...1)
-                    .frame(width: 120)
-                
-                Image(systemName: "square.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .sheet(isPresented: $showingSettings) {
+                AIConfigurationView()
             }
-            .frame(height: controlHeight)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -431,7 +484,13 @@ public struct SymbolPickerView: View {
                                     showTitle: showTitles,
                                     availableVariants: groupVariants ? getAvailableVariants(for: suggestion.name) : [],
                                     onHover: { isHovering in
-                                        hoveredSymbolName = isHovering ? suggestion.name : nil
+                                        if isHovering {
+                                            hoveredSymbolName = suggestion.name
+                                            // Clear copied message when hovering
+                                            justCopiedSymbolName = nil
+                                        } else {
+                                            hoveredSymbolName = nil
+                                        }
                                     },
                                     onVariantChange: { variant in
                                         hoveredSymbolName = variant
@@ -508,7 +567,13 @@ public struct SymbolPickerView: View {
                                     showTitle: showTitles,
                                     availableVariants: groupVariants ? getAvailableVariants(for: symbolName) : [],
                                     onHover: { isHovering in
-                                        hoveredSymbolName = isHovering ? symbolName : nil
+                                        if isHovering {
+                                            hoveredSymbolName = symbolName
+                                            // Clear copied message when hovering
+                                            justCopiedSymbolName = nil
+                                        } else {
+                                            hoveredSymbolName = nil
+                                        }
                                     },
                                     onVariantChange: { variant in
                                         hoveredSymbolName = variant
@@ -523,7 +588,7 @@ public struct SymbolPickerView: View {
                     }
                 } else if searchText.isEmpty && aiSuggestedSymbols.isEmpty {
                     emptyStateView
-                } else if !symbolService.isProcessing {
+                } else if !symbolService.isProcessing && aiSuggestedSymbols.isEmpty {
                     noResultsView
                 }
             }
@@ -683,6 +748,8 @@ public struct SymbolPickerView: View {
         // Use the currently selected variant from hoveredSymbolName
         let actualSymbolName = hoveredSymbolName ?? symbolName
         
+        print("[SymbolPickerView] handleSymbolTap called with: \(actualSymbolName)")
+        
         switch mode {
         case .browser:
             selectedSymbol = actualSymbolName
@@ -692,21 +759,18 @@ public struct SymbolPickerView: View {
             
         case .picker:
             // Copy the actual variant to clipboard
+            print("[SymbolPickerView] Copying symbol: \(actualSymbolName)")
             symbolService.replaceTextWithSymbol(actualSymbolName)
+            print("[SymbolPickerView] Symbol copied")
+            
+            // Clear hover state and show copied state
+            hoveredSymbolName = nil
+            
             withAnimation {
                 justCopiedSymbolName = actualSymbolName
             }
             
-            Task {
-                try? await Task.sleep(for: .seconds(1.5))
-                await MainActor.run {
-                    withAnimation {
-                        if justCopiedSymbolName == actualSymbolName {
-                            justCopiedSymbolName = nil
-                        }
-                    }
-                }
-            }
+            // Don't auto-clear the copied message - let hover clear it
         }
     }
     
