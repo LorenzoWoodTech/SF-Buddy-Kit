@@ -14,6 +14,7 @@ public class SFSymbolPackageSettings {
     
     private static let symbolCountKey = "SFSymbolPackage_SymbolCount"
     private static let selectedModelKey = "SFSymbolPackage_SelectedModel"
+    private static let modelProviderKey = "SFSymbolPackage_ModelProvider"
     
     public var symbolCount: Int {
         didSet {
@@ -27,10 +28,40 @@ public class SFSymbolPackageSettings {
         }
     }
     
+    public var modelProvider: ModelProvider {
+        didSet {
+            UserDefaults.standard.set(modelProvider.rawValue, forKey: SFSymbolPackageSettings.modelProviderKey)
+        }
+    }
+    
     public init() {
         self.symbolCount = UserDefaults.standard.object(forKey: SFSymbolPackageSettings.symbolCountKey) as? Int ?? 12
         let modelRawValue = UserDefaults.standard.string(forKey: SFSymbolPackageSettings.selectedModelKey) ?? ClaudeModel.sonnet.rawValue
         self.selectedModel = ClaudeModel(rawValue: modelRawValue) ?? .sonnet
+        
+        let providerRawValue = UserDefaults.standard.string(forKey: SFSymbolPackageSettings.modelProviderKey) ?? ModelProvider.apple.rawValue
+        self.modelProvider = ModelProvider(rawValue: providerRawValue) ?? .apple
+    }
+}
+
+public enum ModelProvider: String, CaseIterable, Identifiable {
+    case apple = "apple"
+    case claude = "claude"
+    
+    public var id: String { rawValue }
+    
+    public var displayName: String {
+        switch self {
+        case .apple: return "Apple Intelligence"
+        case .claude: return "Claude API"
+        }
+    }
+    
+    public var description: String {
+        switch self {
+        case .apple: return "On-device, private, requires iOS 26+"
+        case .claude: return "Cloud-based, requires API key"
+        }
     }
 }
 

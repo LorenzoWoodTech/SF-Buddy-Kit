@@ -10,11 +10,82 @@ import AppKit
 import UIKit
 #endif
 import Combine
+import SFSafeSymbols
+
+// Foundation Models requires iOS 26.0+ / macOS 26.0+
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
 @MainActor
 class SFSymbolService: ObservableObject {
     static let shared = SFSymbolService()
     private static let userDefaultsAPIKey = "ClaudeAPIKey"
+    
+    // MARK: - Model Provider Configuration
+    
+    public enum ModelProvider: String, CaseIterable, Identifiable {
+        case apple = "apple"
+        case claude = "claude"
+        
+        public var id: String { rawValue }
+        
+        public var displayName: String {
+            switch self {
+            case .apple: return "Apple Intelligence"
+            case .claude: return "Claude API"
+            }
+        }
+        
+        public var description: String {
+            switch self {
+            case .apple: return "On-device, private, requires iOS 26+"
+            case .claude: return "Cloud-based, requires API key"
+            }
+        }
+    }
+    
+    public enum AIServiceError: Equatable {
+        case none
+        case claudeAPIKeyMissing
+        case claudeAPIKeyInvalid
+        case appleIntelligenceUnavailable(reason: String)
+        case noProviderAvailable
+        
+        var title: String {
+            switch self {
+            case .none: return ""
+            case .claudeAPIKeyMissing: return "Claude API Key Missing"
+            case .claudeAPIKeyInvalid: return "Claude API Key Invalid"
+            case .appleIntelligenceUnavailable: return "Apple Intelligence Unavailable"
+            case .noProviderAvailable: return "No AI Provider Configured"
+            }
+        }
+        
+        var message: String {
+            switch self {
+            case .none: return ""
+            case .claudeAPIKeyMissing:
+                return "Claude API is selected but no API key has been configured. Add your Anthropic API key in Settings to enable AI symbol suggestions."
+            case .claudeAPIKeyInvalid:
+                return "The Claude API key appears to be invalid or has been rejected. Please check your API key in Settings."
+            case .appleIntelligenceUnavailable(let reason):
+                return "Apple Intelligence is not available on this device. \(reason). You can switch to Claude API in Settings."
+            case .noProviderAvailable:
+                return "No AI provider is properly configured. Please configure Apple Intelligence or add a Claude API key in Settings."
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .none: return ""
+            case .claudeAPIKeyMissing: return "key.slash"
+            case .claudeAPIKeyInvalid: return "exclamationmark.triangle"
+            case .appleIntelligenceUnavailable: return "apple.logo"
+            case .noProviderAvailable: return "gearshape.2"
+            }
+        }
+    }
 
     @Published var suggestedSymbols: [SFSymbolSuggestion] = []
     @Published var isProcessing = false
@@ -22,47 +93,81 @@ class SFSymbolService: ObservableObject {
     @Published var currentRenderingMode: SymbolRenderingMode = .multicolor
     @Published var invalidSymbolNamesFromClaude: [String] = []
     
+    @Published var currentError: AIServiceError = .none
+    
     @Published var claudeAPIKey: String {
         didSet {
             UserDefaults.standard.set(claudeAPIKey, forKey: SFSymbolService.userDefaultsAPIKey)
             print("[SFSymbolService] API Key updated and saved to UserDefaults.")
+            if !claudeAPIKey.isEmpty {
+                currentError = .none
+            }
         }
     }
     @Published var apiKeyMissingOrInvalid: Bool = false
 
     private let claudeURL = "https://api.anthropic.com/v1/messages"
     
-    #if os(macOS)
-    private static let nonExistentSymbolPlaceholderTiff: Data? = {
-        let nonExistentSymbolName = "com.apple.NonExistentInternalSymbolSFBuddy"
-        let image = NSImage(systemSymbolName: nonExistentSymbolName, accessibilityDescription: nil)
-        if image == nil {
-            print("[SFSymbolService] CRITICAL: NSImage(systemSymbolName: \"\(nonExistentSymbolName)\") returned nil. Symbol validation will not work.")
-        }
-        return image?.tiffRepresentation
-    }()
-    #endif
+    // Cache the symbol list for performance
+    private static let allSymbolNames: [String] = SFSymbol.allSymbols.map { $0.rawValue }
+    private static let symbolSet: Set<String> = Set(allSymbolNames)
 
     private init() {
         self.claudeAPIKey = UserDefaults.standard.string(forKey: SFSymbolService.userDefaultsAPIKey) ?? ""
         print("[SFSymbolService] Initialized. Loaded API Key: \(self.claudeAPIKey.isEmpty ? "Not Set" : "Set")")
+        print("[SFSymbolService] Symbol library loaded: \(Self.allSymbolNames.count) symbols available")
         if self.claudeAPIKey.isEmpty {
             self.apiKeyMissingOrInvalid = true
         }
-
-        #if os(macOS)
-        if SFSymbolService.nonExistentSymbolPlaceholderTiff == nil {
-            print("[SFSymbolService] WARNING: Could not generate non-existent symbol placeholder TIFF. Validation may be affected.")
+    }
+    
+    /// Check if Apple Intelligence is available on this device
+    public func isAppleIntelligenceAvailable() -> Bool {
+        if #available(macOS 26.0, iOS 26.0, *) {
+            #if canImport(FoundationModels)
+            return SystemLanguageModel.default.availability == .available
+            #else
+            return false
+            #endif
+        } else {
+            return false
         }
-        #endif
+    }
+    
+    /// Get a user-friendly status message for Apple Intelligence
+    public func appleIntelligenceStatusMessage() -> String {
+        if #available(macOS 26.0, iOS 26.0, *) {
+            #if canImport(FoundationModels)
+            switch SystemLanguageModel.default.availability {
+            case .available:
+                return "Available"
+            case .unavailable(.deviceNotEligible):
+                return "Device not eligible"
+            case .unavailable(.appleIntelligenceNotEnabled):
+                return "Apple Intelligence not enabled"
+            case .unavailable(.modelNotReady):
+                return "Model downloading or not ready"
+            case .unavailable:
+                return "Unavailable"
+            }
+            #else
+            return "Requires iOS 26+ / macOS 26+"
+            #endif
+        } else {
+            return "Requires iOS 26+ / macOS 26+"
+        }
     }
     
     func processSelectedText() async {
         #if os(macOS)
         print("[SFSymbolService] processSelectedText started.")
-        guard !claudeAPIKey.isEmpty else {
-            print("[SFSymbolService] API Key is missing. Aborting.")
+        
+        // Better error handling
+        let provider = SFSymbolPackageSettings.shared.modelProvider
+        if provider == .claude && claudeAPIKey.isEmpty {
+            print("[SFSymbolService] Claude API Key is missing. Aborting.")
             apiKeyMissingOrInvalid = true
+            currentError = .claudeAPIKeyMissing
             suggestedSymbols = []
             invalidSymbolNamesFromClaude = []
             lastProcessedText = await getSelectedText()
@@ -70,7 +175,9 @@ class SFSymbolService: ObservableObject {
              NotificationCenter.default.post(name: .showSymbolPicker, object: nil)
             return
         }
+        
         apiKeyMissingOrInvalid = false
+        currentError = .none
         isProcessing = true
         invalidSymbolNamesFromClaude = []
         
@@ -99,16 +206,22 @@ class SFSymbolService: ObservableObject {
     /// Process text for AI symbol suggestions (available on all platforms)
     func processText(_ text: String) async {
         print("[SFSymbolService] processText started for: '\(text)'")
-        guard !claudeAPIKey.isEmpty else {
-            print("[SFSymbolService] API Key is missing. Aborting.")
+        
+        // Better error handling
+        let provider = SFSymbolPackageSettings.shared.modelProvider
+        if provider == .claude && claudeAPIKey.isEmpty {
+            print("[SFSymbolService] Claude provider selected but API Key is missing. Aborting.")
             apiKeyMissingOrInvalid = true
+            currentError = .claudeAPIKeyMissing
             suggestedSymbols = []
             invalidSymbolNamesFromClaude = []
             lastProcessedText = text
             isProcessing = false
             return
         }
+        
         apiKeyMissingOrInvalid = false
+        currentError = .none
         isProcessing = true
         lastProcessedText = text
         invalidSymbolNamesFromClaude = []
@@ -158,43 +271,179 @@ class SFSymbolService: ObservableObject {
     
     private func getSFSymbolSuggestions(for text: String) async {
         print("[SFSymbolService] getSFSymbolSuggestions for: '\(text)'")
+        
+        // Check which provider to use
+        let provider = SFSymbolPackageSettings.shared.modelProvider
+        
+        if provider == .apple {
+            // Use Foundation Models
+            if #available(macOS 26.0, iOS 26.0, *) {
+                await getAppleIntelligenceSuggestions(for: text)
+            } else {
+                print("[SFSymbolService] Apple Intelligence requires macOS 26+/iOS 26+, falling back to Claude")
+                await getClaudeSuggestions(for: text)
+            }
+        } else {
+            // Use Claude API (existing implementation)
+            await getClaudeSuggestions(for: text)
+        }
+    }
+    
+    @available(macOS 26.0, iOS 26.0, *)
+    private func getAppleIntelligenceSuggestions(for text: String) async {
+        print("[SFSymbolService] Getting Apple Intelligence suggestions for: '\(text)'")
+        
+        #if canImport(FoundationModels)
+        // Check model availability with better error tracking
+        let availability = SystemLanguageModel.default.availability
+        guard availability == .available else {
+            let reason: String
+            switch availability {
+            case .unavailable(.deviceNotEligible):
+                reason = "Device not eligible"
+            case .unavailable(.appleIntelligenceNotEnabled):
+                reason = "Apple Intelligence not enabled in Settings"
+            case .unavailable(.modelNotReady):
+                reason = "Model downloading or not ready"
+            case .unavailable:
+                reason = "Service unavailable"
+            default:
+                reason = "Unknown reason"
+            }
+            print("[SFSymbolService] Apple Intelligence not available: \(reason)")
+            currentError = .appleIntelligenceUnavailable(reason: reason)
+            
+            // Don't fall back to Claude automatically - let user configure
+            suggestedSymbols = []
+            invalidSymbolNamesFromClaude = []
+            return
+        }
+        
+        // Clear error on success
+        currentError = .none
+        
+        do {
+            let symbolCount = SFSymbolPackageSettings.shared.symbolCount
+            
+            // Get a relevant subset of symbols based on text matching (for better context)
+            let relevantSymbols = getRelevantSymbolSubset(for: text, maxCount: 500)
+            let symbolsContext = relevantSymbols.joined(separator: ", ")
+            
+            let instructions = """
+            You are an expert at Apple's SF Symbols. You have access to the complete list of valid SF Symbol names.
+            When given text, select the MOST relevant symbols from the provided list.
+            
+            CRITICAL: You MUST ONLY choose symbols from the provided list. Do NOT invent or guess symbol names.
+            """
+            
+            let prompt = """
+            Text: "\(text)"
+            
+            Available SF Symbols (choose from these ONLY):
+            \(symbolsContext)
+            
+            Select exactly \(symbolCount) symbols from the list above that best represent "\(text)".
+            Order them from most to least relevant.
+            Return ONLY the exact symbol names from the list.
+            """
+            
+            let session = LanguageModelSession(instructions: instructions)
+            let response = try await session.respond(to: prompt, generating: SymbolSuggestionsResponse.self)
+            
+            print("[SFSymbolService] Apple Intelligence returned \(response.content.symbols.count) symbols: \(response.content.symbols)")
+            
+            // Validate symbols (should all be valid now)
+            var validSuggestions: [SFSymbolSuggestion] = []
+            var invalidNamesAccumulator: [String] = []
+            
+            for name in response.content.symbols {
+                let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmedName.isEmpty { continue }
+                
+                if Self.symbolSet.contains(trimmedName) {
+                    validSuggestions.append(SFSymbolSuggestion(name: trimmedName))
+                    print("[SFSymbolService] ✓ Valid: \(trimmedName)")
+                } else {
+                    print("[SFSymbolService] ✗ Invalid (not in library): \(trimmedName)")
+                    invalidNamesAccumulator.append(trimmedName)
+                }
+            }
+            
+            // Don't fall back if we got nothing - show error
+            if validSuggestions.isEmpty {
+                print("[SFSymbolService] No valid symbols from Apple Intelligence")
+                currentError = .noProviderAvailable
+            }
+            
+            suggestedSymbols = validSuggestions
+            invalidSymbolNamesFromClaude = invalidNamesAccumulator
+            apiKeyMissingOrInvalid = false
+            
+        } catch let error as LanguageModelSession.GenerationError {
+            if case .guardrailViolation = error {
+                print("[SFSymbolService] Guardrail violation with Apple Intelligence")
+            } else {
+                print("[SFSymbolService] Apple Intelligence generation error: \(error)")
+            }
+            currentError = .appleIntelligenceUnavailable(reason: "Generation error")
+            suggestedSymbols = []
+        } catch {
+            print("[SFSymbolService] Apple Intelligence error: \(error)")
+            currentError = .appleIntelligenceUnavailable(reason: error.localizedDescription)
+            suggestedSymbols = []
+        }
+        #else
+        // Foundation Models not available
+        print("[SFSymbolService] FoundationModels not available on this platform")
+        currentError = .appleIntelligenceUnavailable(reason: "Requires iOS 26+ / macOS 26+")
+        suggestedSymbols = []
+        #endif
+    }
+    
+    private func getClaudeSuggestions(for text: String) async {
         var rawSymbolNames: [String] = []
         do {
             rawSymbolNames = try await callClaudeAPI(for: text)
             print("[SFSymbolService] Claude API success. Raw symbols: \(rawSymbolNames)")
             apiKeyMissingOrInvalid = false
+            currentError = .none
         } catch let error as APIError {
-            print("[SFSymbolService] Claude API error: \(error). Falling back to mock suggestions (or empty).")
+            print("[SFSymbolService] Claude API error: \(error)")
             switch error {
             case .requestFailed(let reason):
                 if reason.contains("401") || reason.contains("403") || reason.contains("authentication_error") || reason.contains("invalid_request_error") {
                     apiKeyMissingOrInvalid = true
+                    currentError = .claudeAPIKeyInvalid
                     print("[SFSymbolService] API Key/Config seems invalid or unauthorized. Reason: \(reason)")
                 } else {
                      apiKeyMissingOrInvalid = false
+                     currentError = .noProviderAvailable
                 }
             case .invalidURL, .decodingFailed, .noSuggestions:
                  apiKeyMissingOrInvalid = false
+                 currentError = .noProviderAvailable
             }
-            rawSymbolNames = getMockSuggestions(for: text).map { $0.name }
-            print("[SFSymbolService] Mock suggestions raw names count: \(rawSymbolNames.count)")
+            // Don't use mock data - show error instead
+            suggestedSymbols = []
+            invalidSymbolNamesFromClaude = []
+            return
         } catch {
-            print("[SFSymbolService] Unexpected error during Claude API call: \(error). Falling back to mock suggestions.")
+            print("[SFSymbolService] Unexpected error during Claude API call: \(error)")
             apiKeyMissingOrInvalid = false
-            rawSymbolNames = getMockSuggestions(for: text).map { $0.name }
-            print("[SFSymbolService] Mock suggestions raw names count: \(rawSymbolNames.count)")
+            currentError = .noProviderAvailable
+            suggestedSymbols = []
+            invalidSymbolNamesFromClaude = []
+            return
         }
-
 
         var validSuggestions: [SFSymbolSuggestion] = []
         var invalidNamesAccumulator: [String] = []
 
         for name in rawSymbolNames {
             let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmedName.isEmpty {
-                continue
-            }
-            if isActuallyValidSFSymbol(trimmedName) {
+            if trimmedName.isEmpty { continue }
+            
+            if Self.symbolSet.contains(trimmedName) {
                 validSuggestions.append(SFSymbolSuggestion(name: trimmedName))
             } else {
                 print("[SFSymbolService] Invalid or non-existent symbol suggested: \(trimmedName)")
@@ -206,24 +455,67 @@ class SFSymbolService: ObservableObject {
         invalidSymbolNamesFromClaude = invalidNamesAccumulator
     }
     
-    private func isActuallyValidSFSymbol(_ name: String) -> Bool {
-        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-
-        #if os(macOS)
-        guard let imageFromName = NSImage(systemSymbolName: name, accessibilityDescription: nil) else {
-            return false
+    /// Get a relevant subset of symbols for better AI context
+    private func getRelevantSymbolSubset(for text: String, maxCount: Int) -> [String] {
+        let searchTerm = text.lowercased()
+        let words = searchTerm.split(separator: " ").map(String.init)
+        
+        var scored: [(symbol: String, score: Int)] = []
+        
+        for symbol in Self.allSymbolNames {
+            let symbolLower = symbol.lowercased()
+            var score = 0
+            
+            // Direct substring match
+            if symbolLower.contains(searchTerm) {
+                score += 100
+            }
+            
+            // Word matches
+            for word in words {
+                if symbolLower.contains(word) {
+                    score += 50
+                }
+                // Base symbol match (before first dot)
+                if let baseSymbol = symbol.split(separator: ".").first,
+                   String(baseSymbol).lowercased().contains(word) {
+                    score += 30
+                }
+            }
+            
+            // Prefix bonus
+            if symbolLower.hasPrefix(searchTerm) {
+                score += 200
+            }
+            
+            if score > 0 {
+                scored.append((symbol, score))
+            }
         }
-
-        guard let placeholderTiff = SFSymbolService.nonExistentSymbolPlaceholderTiff else {
-            print("[SFSymbolService] WARNING: nonExistentSymbolPlaceholderTiff is nil. Cannot validate symbol '\(name)'. Assuming valid.")
-            return true
+        
+        // Sort by score and take top results
+        scored.sort { $0.score > $1.score }
+        var results = scored.prefix(maxCount).map { $0.symbol }
+        
+        // If we don't have enough matches, add some popular/common symbols
+        if results.count < 100 {
+            let commonSymbols = Self.allSymbolNames.filter { symbol in
+                ["house", "heart", "star", "gear", "person", "plus", "minus", "checkmark", "xmark",
+                 "magnifyingglass", "trash", "folder", "bell", "envelope", "phone", "message",
+                 "camera", "photo", "video", "music", "play", "pause", "doc", "pencil"].contains {
+                    symbol.hasPrefix($0)
+                }
+            }
+            let additional = commonSymbols.prefix(100 - results.count)
+            results.append(contentsOf: additional)
         }
-
-        return imageFromName.tiffRepresentation != placeholderTiff
-        #else
-        // On iOS, use UIImage for validation
-        return UIImage(systemName: name) != nil
-        #endif
+        
+        // Ensure we have at least some results
+        if results.isEmpty {
+            results = Array(Self.allSymbolNames.prefix(maxCount))
+        }
+        
+        return results
     }
 
     private func callClaudeAPI(for text: String) async throws -> [String] {
@@ -240,14 +532,20 @@ class SFSymbolService: ObservableObject {
         let selectedModel = SFSymbolPackageSettings.shared.selectedModel
         let symbolCount = SFSymbolPackageSettings.shared.symbolCount
         
+        // Get a relevant subset of symbols
+        let relevantSymbols = getRelevantSymbolSubset(for: text, maxCount: 800)
+        let symbolsList = relevantSymbols.joined(separator: ", ")
+        
         let prompt = """
         Given this text: "\(text)"
         
-        Suggest \(symbolCount) relevant SF Symbols that would best represent this concept, action, or meaning.
-        Return ONLY the symbol names (like "house.fill", "person.circle", "magnifyingglass") separated by commas, no explanations or additional text.
-        Focus on symbols that actually exist in Apple's SF Symbols library. Order them with the most relevant first to the least relevant. 
-        If the text is about UI elements, suggest symbols commonly used in app interfaces.
-        Be creative but accurate - only suggest real SF Symbol names.
+        Choose \(symbolCount) relevant SF Symbols from this list:
+        \(symbolsList)
+        
+        IMPORTANT: You MUST choose ONLY from the symbols listed above. Do not invent or guess symbol names.
+        
+        Return ONLY the symbol names separated by commas, no explanations.
+        Order them from most to least relevant to "\(text)".
         """
         
         let requestBody: [String: Any] = [
@@ -269,7 +567,7 @@ class SFSymbolService: ObservableObject {
         
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        print("[SFSymbolService] Claude request being sent with model: \(selectedModel.displayName) (key omitted for log)")
+        print("[SFSymbolService] Claude request with \(relevantSymbols.count) relevant symbols in context")
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -287,7 +585,7 @@ class SFSymbolService: ObservableObject {
             throw APIError.requestFailed(reason: "HTTP Error: \(statusCode). Body: \(responseBody)")
         }
         
-        print("[SFSymbolService] Claude response raw data: \(String(data: data, encoding: .utf8) ?? "Undecodable")")
+        print("[SFSymbolService] Claude response received")
         
         do {
             let result = try JSONDecoder().decode(ClaudeResponse.self, from: data)
@@ -309,25 +607,6 @@ class SFSymbolService: ObservableObject {
             if error is APIError { throw error }
             else { throw APIError.decodingFailed(reason: error.localizedDescription) }
         }
-    }
-    
-    private func getMockSuggestions(for text: String) -> [SFSymbolSuggestion] {
-        print("[SFSymbolService] Using mock suggestions for '\(text)'.")
-        var mocks = [
-            SFSymbolSuggestion(name: "house.fill"),
-            SFSymbolSuggestion(name: "gearshape.fill"),
-            SFSymbolSuggestion(name: "person.circle.fill"),
-            SFSymbolSuggestion(name: "trash.fill"),
-            SFSymbolSuggestion(name: "doc.text.fill"),
-            SFSymbolSuggestion(name: "mic.fill"),
-            SFSymbolSuggestion(name: "video.fill"),
-            SFSymbolSuggestion(name: "bookmark.fill")
-        ]
-        if text.lowercased().contains("invalid") {
-            mocks.append(SFSymbolSuggestion(name: "non.existent.symbol.test.1"))
-            mocks.append(SFSymbolSuggestion(name: "another.fake.one"))
-        }
-        return mocks
     }
     
     func replaceTextWithSymbol(_ symbolName: String) {
@@ -380,3 +659,13 @@ struct SFSymbolSuggestion: Identifiable {
     let id = UUID()
     let name: String
 }
+
+// Define the response structure for Apple Intelligence
+#if canImport(FoundationModels)
+@available(macOS 26.0, iOS 26.0, *)
+@Generable(description: "A list of SF Symbol names")
+struct SymbolSuggestionsResponse {
+    @Guide(description: "Array of SF Symbol names (e.g., 'house.fill', 'person.circle')")
+    var symbols: [String]
+}
+#endif

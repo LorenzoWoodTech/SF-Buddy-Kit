@@ -28,6 +28,8 @@ public struct SymbolPickerView: View {
     @State private var justCopiedSymbolName: String?
     @State private var debouncedFilteredSymbols: [String] = []
     @State private var filterTask: Task<Void, Never>?
+    @State private var showingSettings = false
+    @State private var showingInlineConfig = false
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -99,30 +101,15 @@ public struct SymbolPickerView: View {
                 }
                 
                 ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 8) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showingCategoryFilter.toggle()
-                            }
-                        } label: {
-                            Image(systemName: showingCategoryFilter ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                                .foregroundColor(.accentColor)
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showingCategoryFilter.toggle()
                         }
-                        .help("Toggle Categories")
-                        
-                        Button {
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "info.circle")
-                                    .font(.caption)
-                                Text("\(totalSymbolCount)")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                            }
-                            .foregroundColor(.secondary)
-                        }
-                        .help("Total: \(totalSymbolCount) (\(aiSuggestedSymbols.count) AI + \(debouncedFilteredSymbols.count) filtered)")
+                    } label: {
+                        Image(systemName: showingCategoryFilter ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                            .foregroundColor(.accentColor)
                     }
+                    .help("Toggle Categories")
                 }
             }
         }
@@ -158,18 +145,87 @@ public struct SymbolPickerView: View {
             .buttonStyle(.plain)
             
             Menu {
-                ForEach(SymbolRenderingMode.allCases) { mode in
-                    Button {
-                        symbolService.currentRenderingMode = mode
-                    } label: {
-                        Label(mode.displayName, systemImage: mode.iconName)
+                // Rendering Mode Section
+                Section("Rendering Mode") {
+                    ForEach(SymbolRenderingMode.allCases) { mode in
+                        Button {
+                            symbolService.currentRenderingMode = mode
+                        } label: {
+                            HStack {
+                                if symbolService.currentRenderingMode == mode {
+                                    Image(systemName: "checkmark")
+                                }
+                                Label(mode.displayName, systemImage: mode.iconName)
+                            }
+                        }
                     }
+                }
+                
+                // Color Section
+                Section("Color") {
+                    ControlGroup {
+                        ForEach(colorPaletteFirstRow, id: \.0) { colorName, color in
+                            Button {
+                                selectedColor = color
+                            } label: {
+                                Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
+                            }
+                            .tint(color)
+                        }
+                    }
+                    .controlGroupStyle(.palette)
+                    
+                    ControlGroup {
+                        ForEach(colorPaletteSecondRow, id: \.0) { colorName, color in
+                            Button {
+                                selectedColor = color
+                            } label: {
+                                Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
+                            }
+                            .tint(color)
+                        }
+                    }
+                    .controlGroupStyle(.palette)
+                }
+                
+                // Vegas Mode Submenu
+                Menu {
+                    Button {
+                        withAnimation(.bouncy) {
+                            vegasMode.toggle()
+                        }
+                    } label: {
+                        HStack {
+                            if vegasMode {
+                                Image(systemName: "checkmark")
+                            }
+                            Label("Vegas Mode", systemImage: "sparkles")
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    Button {
+                        VegasSettings.shared.triggerVegasChaos()
+                    } label: {
+                        Label("Trigger Chaos", systemImage: "flame")
+                    }
+                    .disabled(!vegasMode)
+                    
+                    Button {
+                        VegasSettings.shared.randomizeVegas()
+                    } label: {
+                        Label("Randomize Settings", systemImage: "dice")
+                    }
+                    .disabled(!vegasMode)
+                } label: {
+                    Label("Vegas Mode", systemImage: "sparkles")
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: symbolService.currentRenderingMode.iconName)
+                    Image(systemName: "slider.horizontal.3")
                         .font(.caption)
-                    Text("Render")
+                    Text("View")
                         .font(.caption)
                     Image(systemName: "chevron.down")
                         .font(.caption2)
@@ -181,47 +237,37 @@ public struct SymbolPickerView: View {
             }
             .buttonStyle(.plain)
             
-            ColorPaletteView(selectedColor: $selectedColor)
-            
-            Button {
-                withAnimation(.bouncy) {
-                    vegasMode.toggle()
-                }
-            } label: {
-                Image(systemName: vegasMode ? "sparkles" : "sparkles")
-                    .font(.caption)
-                    .foregroundColor(vegasMode ? .yellow : .secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        vegasMode ? Color.yellow.opacity(0.2) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 6)
-                    )
-            }
-            .buttonStyle(.plain)
-            .contextMenu {
-                Button("Trigger Chaos") {
-                    VegasSettings.shared.triggerVegasChaos()
-                }
-                
-                Button("Randomize Settings") {
-                    VegasSettings.shared.randomizeVegas()
-                }
-                
-                Divider()
-                
-                Button(vegasMode ? "Disable Vegas Mode" : "Enable Vegas Mode") {
-                    withAnimation(.bouncy) {
-                        vegasMode.toggle()
-                    }
-                }
-            }
-            
             Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.regularMaterial)
+    }
+    
+    // MARK: - Color Palette Data
+    private var colorPaletteFirstRow: [(String, Color)] {
+        [
+            ("Red", .red),
+            ("Orange", .orange),
+            ("Yellow", .yellow),
+            ("Green", .green),
+            ("Mint", .mint),
+            ("Teal", .teal),
+            ("Cyan", .cyan),
+            ("Blue", .blue)
+        ]
+    }
+    
+    private var colorPaletteSecondRow: [(String, Color)] {
+        [
+            ("Indigo", .indigo),
+            ("Purple", .purple),
+            ("Pink", .pink),
+            ("Brown", .brown),
+            ("Gray", .gray),
+            ("Primary", .primary),
+            ("Secondary", .secondary)
+        ]
     }
     
     // MARK: - Category Filter Bar
@@ -261,6 +307,11 @@ public struct SymbolPickerView: View {
     private var symbolGridView: some View {
         ScrollView {
             VStack(spacing: 0) {
+                // Configuration error view
+                if symbolService.currentError != .none && !symbolService.isProcessing && aiSuggestedSymbols.isEmpty && !searchText.isEmpty {
+                    configurationErrorView
+                }
+                
                 // AI Suggestions Section
                 if !aiSuggestedSymbols.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
@@ -475,6 +526,73 @@ public struct SymbolPickerView: View {
             }
         }
         .padding(.top, 80)
+    }
+    
+    private var configurationErrorView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: symbolService.currentError.icon)
+                .font(.system(size: 56))
+                .foregroundStyle(.orange)
+                .symbolEffect(.bounce, value: symbolService.currentError)
+            
+            VStack(spacing: 12) {
+                Text(symbolService.currentError.title)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                
+                Text(symbolService.currentError.message)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 32)
+            }
+            
+            VStack(spacing: 12) {
+                Button {
+                    showingInlineConfig = true
+                } label: {
+                    Label("Configure AI", systemImage: "gearshape")
+                        .font(.body)
+                        .fontWeight(.medium)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                
+                // Quick actions based on error type
+                if symbolService.currentError == .claudeAPIKeyMissing {
+                    Link(destination: URL(string: "https://console.anthropic.com/account/keys")!) {
+                        Label("Get Claude API Key", systemImage: "link")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                } else if case .appleIntelligenceUnavailable = symbolService.currentError {
+                    Button {
+                        SFSymbolPackageSettings.shared.modelProvider = .claude
+                        showingInlineConfig = true
+                    } label: {
+                        Label("Switch to Claude API", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                
+                Button("Browse Symbols Manually") {
+                    searchText = ""
+                    symbolService.currentError = .none
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 40)
+        .padding(.horizontal, 24)
+        .sheet(isPresented: $showingInlineConfig) {
+            AIConfigurationView()
+        }
     }
     
     // MARK: - Symbol Handling
