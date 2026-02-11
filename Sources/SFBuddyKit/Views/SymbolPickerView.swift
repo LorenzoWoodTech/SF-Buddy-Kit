@@ -469,7 +469,7 @@ public struct SymbolPickerView: View {
                                 repeating: GridItem(.flexible(), spacing: 10),
                                 count: columnCount
                             ),
-                            spacing: 16
+                            spacing: 20
                         ) {
                             ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
                                 IconCard(
@@ -660,10 +660,6 @@ public struct SymbolPickerView: View {
         switch mode {
         case .browser:
             selectedSymbol = actualSymbolName
-            #if os(iOS)
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-            #endif
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 dismiss()
             }
@@ -753,17 +749,76 @@ public struct SymbolPickerView: View {
         // Always include base variant first
         variants.append(.base(symbolName))
         
-        // Check for fill variant
+        // Check for fill variant of base (must be exactly symbolName.fill)
         if hasFillVariant(symbolName) {
             variants.append(.fill(symbolName))
         }
         
-        // Check for all badge variants dynamically
-        // This includes .badge, .badge.plus, .badge.gearshape, .trianglebadge.exclamationmark, etc.
+        // Check for slash variant (must be exactly symbolName.slash or symbolName.slash.fill)
+        let slashVariant = symbolName + ".slash"
+        if allSymbols.contains(slashVariant) {
+            variants.append(.slash(symbolName))
+            
+            // Also check for slash.fill
+            let slashFillVariant = slashVariant + ".fill"
+            if allSymbols.contains(slashFillVariant) {
+                variants.append(SymbolVariant(
+                    symbolName: slashFillVariant,
+                    displayName: "Slash Fill",
+                    badgeIcon: "slash.circle.fill",
+                    isBase: false,
+                    variantType: .slash
+                ))
+            }
+        }
+        
+        // Check for circle and circle.fill variants (must be exactly symbolName.circle or symbolName.circle.fill)
+        let circleVariant = symbolName + ".circle"
+        let circleFillVariant = symbolName + ".circle.fill"
+        
+        if allSymbols.contains(circleVariant) {
+            variants.append(.circle(symbolName))
+        }
+        
+        if allSymbols.contains(circleFillVariant) {
+            variants.append(.circleFill(symbolName))
+        }
+        
+        // Track badge variants we've already added (without .fill suffix)
+        var addedBadgeBase: Set<String> = []
+        
+        // Check for badge variants - must come immediately after base symbol
+        // Valid: symbolName.badge, symbolName.badge.plus, symbolName.badge.checkmark, etc.
+        // Invalid: symbolName.window.badge (that's a variant of symbolName.window)
         for symbol in allSymbols {
-            // Check if this symbol starts with our base symbol and contains badge
-            if symbol.hasPrefix(symbolName + ".") && (symbol.contains(".badge") || symbol.contains(".trianglebadge")) {
-                variants.append(.badge(symbol, baseSymbolName: symbolName))
+            // Must start with base symbol + .badge or base symbol + .trianglebadge
+            let badgePattern = symbolName + ".badge"
+            let triangleBadgePattern = symbolName + ".trianglebadge"
+            
+            let isBadgeVariant = symbol.hasPrefix(badgePattern) && 
+                                 (symbol.count == badgePattern.count || 
+                                  symbol[symbol.index(symbol.startIndex, offsetBy: badgePattern.count)] == ".")
+            
+            let isTriangleBadgeVariant = symbol.hasPrefix(triangleBadgePattern) && 
+                                        (symbol.count == triangleBadgePattern.count || 
+                                         symbol[symbol.index(symbol.startIndex, offsetBy: triangleBadgePattern.count)] == ".")
+            
+            if isBadgeVariant || isTriangleBadgeVariant {
+                // Get the base badge name (without .fill)
+                let baseBadgeName = symbol.replacingOccurrences(of: ".fill", with: "")
+                
+                // Only add each badge variant once (prefer non-fill version for the indicator)
+                if !addedBadgeBase.contains(baseBadgeName) {
+                    variants.append(.badge(baseBadgeName, baseSymbolName: symbolName))
+                    addedBadgeBase.insert(baseBadgeName)
+                    
+                    // Also check if this badge has a fill variant
+                    let fillBadgeName = baseBadgeName + ".fill"
+                    if allSymbols.contains(fillBadgeName) {
+                        // Add the fill version as a separate entry so Option key can find it
+                        variants.append(.badge(fillBadgeName, baseSymbolName: symbolName))
+                    }
+                }
             }
         }
         
@@ -776,12 +831,15 @@ public struct SymbolPickerView: View {
         // Don't show fill indicator if the symbol already contains "fill"
         guard !symbolName.contains("fill") else { return false }
         
-        // Check if a .fill variant exists for this symbol
+        // Also skip if symbol already ends in .circle or .slash (those have their own fill handling)
+        if symbolName.hasSuffix(".circle") || symbolName.hasSuffix(".slash") {
+            return false
+        }
+        
+        // Check if a .fill variant exists for this symbol (must be exactly symbolName.fill)
         let fillVariant = symbolName + ".fill"
         let exists = SFSymbol.allSymbols.contains { $0.rawValue == fillVariant }
         
-        // Additional validation: the fill variant should actually be different when rendered
-        // For symbols like "1.circle", ensure "1.circle.fill" exists, not just "circle.fill"
         return exists
     }
     

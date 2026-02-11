@@ -27,6 +27,8 @@ struct SymbolVariant: Identifiable, Hashable {
         case base
         case fill
         case badge
+        case slash
+        case circle
     }
 }
 
@@ -50,6 +52,39 @@ extension SymbolVariant {
             badgeIcon: "paintbrush.fill",
             isBase: false,
             variantType: .fill
+        )
+    }
+    
+    /// Create slash variant
+    static func slash(_ baseSymbolName: String) -> SymbolVariant {
+        SymbolVariant(
+            symbolName: baseSymbolName + ".slash",
+            displayName: "Slash",
+            badgeIcon: "slash.circle",
+            isBase: false,
+            variantType: .slash
+        )
+    }
+    
+    /// Create circle variant
+    static func circle(_ baseSymbolName: String) -> SymbolVariant {
+        SymbolVariant(
+            symbolName: baseSymbolName + ".circle",
+            displayName: "Circle",
+            badgeIcon: "circle",
+            isBase: false,
+            variantType: .circle
+        )
+    }
+    
+    /// Create circle.fill variant
+    static func circleFill(_ baseSymbolName: String) -> SymbolVariant {
+        SymbolVariant(
+            symbolName: baseSymbolName + ".circle.fill",
+            displayName: "Circle Fill",
+            badgeIcon: "circle.fill",
+            isBase: false,
+            variantType: .circle
         )
     }
     
@@ -80,9 +115,11 @@ extension SymbolVariant {
         if suffix.contains(".trianglebadge.") {
             let parts = suffix.components(separatedBy: ".trianglebadge.")
             if parts.count > 1 {
-                _ = parts[1]
-                // For trianglebadge, use the triangle version if it exists
-                return "exclamationmark.triangle.fill"
+                var iconName = parts[1]
+                // Strip .fill from the end - fill state of badge icon is irrelevant
+                iconName = iconName.replacingOccurrences(of: ".fill", with: "")
+                // For trianglebadge, wrap in triangle shape
+                return wrapInShape(iconName, preferredShape: "triangle")
             }
         }
         
@@ -90,18 +127,57 @@ extension SymbolVariant {
         if suffix.contains(".badge.") {
             let parts = suffix.components(separatedBy: ".badge.")
             if parts.count > 1 {
-                let iconName = parts[1]
-                return iconName // Use the actual badge icon name
+                var iconName = parts[1]
+                // Strip .fill from the end - fill state of badge icon is irrelevant
+                iconName = iconName.replacingOccurrences(of: ".fill", with: "")
+                return wrapInShape(iconName, preferredShape: "circle")
             }
         }
         
         // Just ".badge" with no icon specified
-        if suffix == ".badge" {
+        if suffix == ".badge" || suffix == ".badge.fill" {
             return "circle.fill"
         }
         
         // Fallback
         return "circle.fill"
+    }
+    
+    private static func wrapInShape(_ iconName: String, preferredShape: String) -> String {
+        // Icons that already have a shape - return as-is
+        let hasShape = iconName.contains(".circle") || 
+                       iconName.contains(".square") || 
+                       iconName.contains(".triangle") ||
+                       iconName.contains(".diamond") ||
+                       iconName.contains(".rectangle") ||
+                       iconName.contains(".capsule") ||
+                       iconName.contains(".shield")
+        
+        if hasShape {
+            return iconName
+        }
+        
+        // Common badge icons that should be wrapped in a shape
+        let simpleIcons = [
+            "plus", "minus", "multiply", "divide", "equal",
+            "checkmark", "xmark", "questionmark", "exclamationmark",
+            "person", "star", "heart", "bolt", "flag",
+            "bell", "tag", "bookmark", "gear", "gearshape",
+            "clock", "calendar", "location", "pin",
+            "arrow", "chevron", "link", "paperclip",
+            "number", "character", "letter"
+        ]
+        
+        // Check if icon starts with any simple icon name
+        let needsShape = simpleIcons.contains { iconName.hasPrefix($0) || iconName == $0 }
+        
+        if needsShape {
+            // Use the preferred shape (circle for badges, triangle for trianglebadges)
+            return "\(iconName).\(preferredShape).fill"
+        }
+        
+        // For other icons (like "gearshape"), wrap in circle by default
+        return "\(iconName).\(preferredShape).fill"
     }
     
     private static func extractBadgeDisplayName(from fullSymbol: String) -> String {
