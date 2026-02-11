@@ -26,6 +26,8 @@ public struct SymbolPickerView: View {
     @State private var vegasMode = false
     @State private var gridSize: SymbolGridSize = .medium
     @State private var justCopiedSymbolName: String?
+    @State private var debouncedFilteredSymbols: [String] = []
+    @State private var filterTask: Task<Void, Never>?
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -69,6 +71,26 @@ public struct SymbolPickerView: View {
                     }
                 }
             }
+            .onChange(of: searchText) { _, newValue in
+                filterTask?.cancel()
+                filterTask = Task {
+                    try? await Task.sleep(for: .milliseconds(150))
+                    if !Task.isCancelled {
+                        await updateFilteredSymbols()
+                    }
+                }
+            }
+            .onChange(of: selectedCategory) { _, _ in
+                filterTask?.cancel()
+                filterTask = Task {
+                    await updateFilteredSymbols()
+                }
+            }
+            .onAppear {
+                Task {
+                    await updateFilteredSymbols()
+                }
+            }
             .toolbar {
                 if showDismissButton {
                     ToolbarItem(placement: .cancellationAction) {
@@ -99,7 +121,7 @@ public struct SymbolPickerView: View {
                             }
                             .foregroundColor(.secondary)
                         }
-                        .help("Total: \(totalSymbolCount) (\(aiSuggestedSymbols.count) AI + \(filteredSymbols.count) filtered)")
+                        .help("Total: \(totalSymbolCount) (\(aiSuggestedSymbols.count) AI + \(debouncedFilteredSymbols.count) filtered)")
                     }
                 }
             }
@@ -320,7 +342,7 @@ public struct SymbolPickerView: View {
                 }
                 
                 // All/Filtered Symbols Section
-                if !filteredSymbols.isEmpty {
+                if !debouncedFilteredSymbols.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         if !aiSuggestedSymbols.isEmpty {
                             HStack {
@@ -331,7 +353,7 @@ public struct SymbolPickerView: View {
                                 
                                 Spacer()
                                 
-                                Text("\(filteredSymbols.count) symbols")
+                                Text("\(debouncedFilteredSymbols.count) symbols")
                                     .font(.caption2)
                                     .foregroundColor(.secondary.opacity(0.6))
                             }
@@ -348,7 +370,7 @@ public struct SymbolPickerView: View {
                             ),
                             spacing: 10
                         ) {
-                            ForEach(filteredSymbols, id: \.self) { symbolName in
+                            ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
                                 SymbolGridButton(
                                     symbolName: symbolName,
                                     isSelected: selectedSymbol == symbolName,
@@ -492,7 +514,13 @@ public struct SymbolPickerView: View {
         symbolService.suggestedSymbols
     }
     
-    private var filteredSymbols: [String] {
+    private var totalSymbolCount: Int {
+        aiSuggestedSymbols.count + debouncedFilteredSymbols.count
+    }
+    
+    // MARK: - Async Filtering
+    @MainActor
+    private func updateFilteredSymbols() async {
         let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
         var symbols = allSymbols
         
@@ -509,20 +537,69 @@ public struct SymbolPickerView: View {
         let maxResults = searchText.isEmpty ? 400 : 800
         let limitedSymbols = Array(symbols.prefix(maxResults))
         
-        // Only sort the limited subset - much faster
+        // Smart sorting by relevance when searching
         if !searchText.isEmpty {
-            return limitedSymbols.sorted { symbol1, symbol2 in
-                let dots1 = symbol1.filter { $0 == "." }.count
-                let dots2 = symbol2.filter { $0 == "." }.count
-                return dots1 < dots2
+            let sorted = limitedSymbols.sorted { symbol1, symbol2 in
+                let score1 = symbolRelevanceScore(symbol1, searchTerm: searchText)
+                let score2 = symbolRelevanceScore(symbol2, searchTerm: searchText)
+                return score1 > score2
+            }
+            debouncedFilteredSymbols = sorted
+        } else {
+            debouncedFilteredSymbols = limitedSymbols
+        }
+    }
+    
+    // MARK: - Relevance Scoring
+    private func symbolRelevanceScore(_ symbol: String, searchTerm: String) -> Int {
+        var score = 0
+        let lower = symbol.lowercased()
+        let search = searchTerm.lowercased()
+        
+        // Exact match: highest priority
+        if lower == search {
+            score += 10000
+        }
+        // Starts with search term
+        else if lower.hasPrefix(search) {
+            score += 5000
+        }
+        // Base symbol name matches (before first dot)
+        else if let baseSymbol = symbol.split(separator: ".").first,
+                baseSymbol.lowercased() == search {
+            score += 3000
+        }
+        // Base symbol starts with search
+        else if let baseSymbol = symbol.split(separator: ".").first,
+                baseSymbol.lowercased().hasPrefix(search) {
+            score += 1000
+        }
+        // Contains search term
+        else if lower.contains(search) {
+            score += 500
+        }
+        
+        // Bonus for common/popular base symbols
+        if let baseSymbol = symbol.split(separator: ".").first {
+            let popularSymbols: Set<String> = [
+                "house", "gear", "person", "heart", "star", "plus", "minus",
+                "magnifyingglass", "checkmark", "xmark", "trash", "pencil",
+                "folder", "bell", "envelope", "phone", "message", "camera",
+                "arrow", "square", "circle", "text", "doc", "photo", "video"
+            ]
+            if popularSymbols.contains(String(baseSymbol).lowercased()) {
+                score += 100
             }
         }
         
-        return limitedSymbols
-    }
-    
-    private var totalSymbolCount: Int {
-        aiSuggestedSymbols.count + filteredSymbols.count
+        // Prefer simpler symbols (fewer modifiers)
+        let dots = symbol.filter { $0 == "." }.count
+        score -= dots * 50
+        
+        // Prefer shorter names
+        score -= symbol.count
+        
+        return score
     }
     
     // MARK: - Category Matching
