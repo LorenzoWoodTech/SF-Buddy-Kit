@@ -758,49 +758,17 @@ public struct SymbolPickerView: View {
             variants.append(.fill(symbolName))
         }
         
-        // Check for all badge variants
-        // This includes simple badges like .badge.plus and complex ones like .badge.gearshape
+        // Check for all badge variants dynamically
+        // This includes .badge, .badge.plus, .badge.gearshape, .trianglebadge.exclamationmark, etc.
         for symbol in allSymbols {
-            // Check if this symbol starts with our base symbol and contains .badge
-            if symbol.hasPrefix(symbolName + ".") && symbol.contains(".badge") {
-                // Extract the badge type from the full symbol name
-                if let badgeType = extractBadgeType(from: symbol, base: symbolName) {
-                    variants.append(badgeType)
-                }
+            // Check if this symbol starts with our base symbol and contains badge
+            if symbol.hasPrefix(symbolName + ".") && (symbol.contains(".badge") || symbol.contains(".trianglebadge")) {
+                variants.append(.badge(symbol, baseSymbolName: symbolName))
             }
         }
         
         // Return empty array if only base variant exists
         return variants.count > 1 ? variants : []
-    }
-    
-    private func extractBadgeType(from fullSymbol: String, base: String) -> SymbolVariant? {
-        // fullSymbol might be "folder.badge.plus" or "folder.badge.gearshape"
-        // base is "folder"
-        
-        // Get the suffix after the base symbol
-        let suffix = String(fullSymbol.dropFirst(base.count))
-        
-        // Check if it matches a known BadgeType
-        if let badgeType = BadgeType.allCases.first(where: { suffix == $0.suffix }) {
-            return .badge(base, badgeType: badgeType)
-        }
-        
-        // If it contains .badge but doesn't match our enum, it might be a custom badge
-        // like .badge.gearshape - create a custom badge variant for it
-        if suffix.hasPrefix(".badge") {
-            // For now, we'll use the generic .badge icon for unknown badge types
-            // Could be enhanced later to detect the specific icon
-            return SymbolVariant(
-                symbolName: fullSymbol,
-                displayName: "Badge",
-                badgeIcon: "circle.fill",
-                isBase: false,
-                variantType: .badge
-            )
-        }
-        
-        return nil
     }
     
     // MARK: - Fill Variant Detection

@@ -34,9 +34,27 @@ struct IconCard: View {
     @State private var showCopyFeedback = false
     @State private var isDraggingOnIndicator = false
     @State private var pressStartedOnIndicator = false
+    @State private var isOptionKeyPressed = false
     
     private var hasVariants: Bool {
         !availableVariants.isEmpty
+    }
+    
+    private var fillVariantIndex: Int? {
+        availableVariants.firstIndex { $0.variantType == .fill }
+    }
+    
+    private var displayVariant: SymbolVariant {
+        // If Option key is held and we have a fill variant, show it
+        if isOptionKeyPressed, let fillIndex = fillVariantIndex {
+            return availableVariants[fillIndex]
+        }
+        
+        // Otherwise show current variant
+        if hasVariants && currentVariantIndex < availableVariants.count {
+            return availableVariants[currentVariantIndex]
+        }
+        return .base(symbolName)
     }
     
     private var currentVariant: SymbolVariant {
@@ -90,7 +108,6 @@ struct IconCard: View {
                     // Variant indicators (always visible, but skip base variant)
                     if hasVariants {
                         variantIndicators(in: geometry.size)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     
                     // Copy feedback overlay
@@ -141,7 +158,7 @@ struct IconCard: View {
             
             // Optional title below card
             if showTitle {
-                Text(currentVariant.symbolName)
+                Text(displayVariant.symbolName)
                     .font(.callout)
                     .lineLimit(1)
                     .foregroundStyle(.primary)
@@ -152,6 +169,14 @@ struct IconCard: View {
             if vegasMode {
                 startVegasAnimations()
             }
+            #if os(macOS)
+            startMonitoringKeyboard()
+            #endif
+        }
+        .onDisappear {
+            #if os(macOS)
+            stopMonitoringKeyboard()
+            #endif
         }
         .onChange(of: vegasMode) { _, newValue in
             if newValue {
@@ -175,133 +200,120 @@ struct IconCard: View {
         .onChange(of: currentVariantIndex) { _, _ in
             onVariantChange(currentVariant.symbolName)
         }
+        .onChange(of: isOptionKeyPressed) { _, _ in
+            // Update display when Option key state changes
+            onVariantChange(displayVariant.symbolName)
+        }
     }
+    
+    // MARK: - Keyboard Monitoring
+    #if os(macOS)
+    private func startMonitoringKeyboard() {
+        NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
+            isOptionKeyPressed = event.modifierFlags.contains(.option)
+            return event
+        }
+    }
+    
+    private func stopMonitoringKeyboard() {
+        // Event monitor cleanup happens automatically
+    }
+    #endif
     
     // MARK: - Variant Indicators
     @ViewBuilder
     private func variantIndicators(in size: CGSize) -> some View {
-        ZStack {
-            ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
-                // Skip base variant - it doesn't need an indicator
-                if variant.variantType != .base, let badgeIcon = variant.badgeIcon {
-                    let alignment = cornerAlignment(for: index, variant: variant)
-                    let hitTestSize: CGFloat = 44 // Increased from 32
-                    
-                    Image(systemName: badgeIcon)
-                        .font(.system(size: indicatorSize))
-                        .foregroundStyle(index == currentVariantIndex ? .primary : .secondary)
-                        .scaleEffect(index == currentVariantIndex ? 1.3 : 1.0)
-                        .animation(.spring(duration: 0.2), value: currentVariantIndex)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-                        .padding(10)
-                        .contentShape(Rectangle().size(width: hitTestSize, height: hitTestSize))
-                        .onTapGesture {
-                            withAnimation(.spring(duration: 0.2)) {
-                                // If tapping the active variant, deselect it (return to base)
-                                if index == currentVariantIndex {
-                                    currentVariantIndex = 0
-                                } else {
-                                    currentVariantIndex = index
-                                }
-                            }
-                            pressStartedOnIndicator = true
-                            
-                            #if os(macOS)
-                            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-                            #endif
-                            
-                            // Reset flag after a short delay
-                            Task {
-                                try? await Task.sleep(for: .milliseconds(100))
-                                pressStartedOnIndicator = false
+        ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
+            // Skip base variant - it doesn't need an indicator
+            if variant.variantType != .base, let badgeIcon = variant.badgeIcon {
+                let alignment = cornerAlignment(for: index, variant: variant)
+                
+                VariantIndicatorButton(
+                    icon: badgeIcon,
+                    isActive: index == currentVariantIndex,
+                    alignment: alignment,
+                    size: indicatorSize,
+                    onTap: {
+                        withAnimation(.spring(duration: 0.2)) {
+                            // If tapping the active variant, deselect it (return to base)
+                            if index == currentVariantIndex {
+                                currentVariantIndex = 0
+                            } else {
+                                currentVariantIndex = index
                             }
                         }
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    if !isDraggingOnIndicator {
-                                        isDraggingOnIndicator = true
-                                        pressStartedOnIndicator = true
-                                    }
-                                    
-                                    // Check if we're over a different indicator
-                                    if let newIndex = findIndicatorAt(location: value.location, in: size) {
-                                        if newIndex != currentVariantIndex {
-                                            withAnimation(.spring(duration: 0.15)) {
-                                                currentVariantIndex = newIndex
-                                            }
-                                            
-                                            #if os(macOS)
-                                            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-                                            #endif
-                                        }
-                                    }
+                        pressStartedOnIndicator = true
+                        
+                        #if os(macOS)
+                        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+                        #endif
+                        
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(100))
+                            pressStartedOnIndicator = false
+                        }
+                    },
+                    onDragChanged: { location in
+                        if !isDraggingOnIndicator {
+                            isDraggingOnIndicator = true
+                            pressStartedOnIndicator = true
+                        }
+                        
+                        if let newIndex = findIndicatorAt(location: location, in: size) {
+                            if newIndex != currentVariantIndex {
+                                withAnimation(.spring(duration: 0.15)) {
+                                    currentVariantIndex = newIndex
                                 }
-                                .onEnded { _ in
-                                    isDraggingOnIndicator = false
-                                    Task {
-                                        try? await Task.sleep(for: .milliseconds(100))
-                                        pressStartedOnIndicator = false
-                                    }
-                                }
-                        )
-                }
+                                
+                                #if os(macOS)
+                                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+                                #endif
+                            }
+                        }
+                    },
+                    onDragEnded: {
+                        isDraggingOnIndicator = false
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(100))
+                            pressStartedOnIndicator = false
+                        }
+                    }
+                )
             }
         }
     }
     
     private var indicatorSize: CGFloat {
-        return 11 + (gridScale * 5) // Slightly larger
+        return 12 + (gridScale * 5)
     }
     
     private func cornerAlignment(for index: Int, variant: SymbolVariant) -> Alignment {
-        // Organize by variant type:
-        // - Base: not shown (no indicator)
-        // - Fill: bottom-left
-        // - Badges: right side (top-right, bottom-right, then wrap)
-        
         switch variant.variantType {
         case .base:
-            return .topLeading // Won't be shown anyway
+            return .topLeading
         case .fill:
             return .bottomLeading
         case .badge:
-            // Count how many badge variants come before this one
             let badgeIndex = availableVariants.prefix(index).filter { $0.variantType == .badge }.count
             switch badgeIndex {
             case 0: return .topTrailing
             case 1: return .bottomTrailing
-            case 2: return .topLeading // Wrap to left side if more than 2 badges
-            default: return .bottomLeading // Continue wrapping
+            case 2: return .topLeading
+            default: return .bottomLeading
             }
         }
     }
     
     private func findIndicatorAt(location: CGPoint, in size: CGSize) -> Int? {
-        let indicatorHitSize: CGFloat = 44
-        let padding: CGFloat = 10
+        let hitSize: CGFloat = 44
         
         for (index, variant) in availableVariants.enumerated() {
-            // Skip base variant
             guard variant.variantType != .base else { continue }
             
             let alignment = cornerAlignment(for: index, variant: variant)
+            let rect = hitRect(for: alignment, size: size, hitSize: hitSize)
             
-            var indicatorRect: CGRect
-            switch alignment {
-            case .topLeading:
-                indicatorRect = CGRect(x: 0, y: 0, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
-            case .topTrailing:
-                indicatorRect = CGRect(x: size.width - indicatorHitSize - padding, y: 0, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
-            case .bottomTrailing:
-                indicatorRect = CGRect(x: size.width - indicatorHitSize - padding, y: size.height - indicatorHitSize - padding, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
-            case .bottomLeading:
-                indicatorRect = CGRect(x: 0, y: size.height - indicatorHitSize - padding, width: indicatorHitSize + padding, height: indicatorHitSize + padding)
-            default:
-                continue
-            }
-            
-            if indicatorRect.contains(location) {
+            if rect.contains(location) {
                 return index
             }
         }
@@ -309,11 +321,25 @@ struct IconCard: View {
         return nil
     }
     
+    private func hitRect(for alignment: Alignment, size: CGSize, hitSize: CGFloat) -> CGRect {
+        switch alignment {
+        case .topLeading:
+            return CGRect(x: 0, y: 0, width: hitSize, height: hitSize)
+        case .topTrailing:
+            return CGRect(x: size.width - hitSize, y: 0, width: hitSize, height: hitSize)
+        case .bottomTrailing:
+            return CGRect(x: size.width - hitSize, y: size.height - hitSize, width: hitSize, height: hitSize)
+        case .bottomLeading:
+            return CGRect(x: 0, y: size.height - hitSize, width: hitSize, height: hitSize)
+        default:
+            return .zero
+        }
+    }
+    
     // MARK: - Main Action
     private func handleMainAction() {
         action()
         
-        // Show copy feedback
         withAnimation(.spring(duration: 0.3)) {
             showCopyFeedback = true
         }
@@ -334,7 +360,7 @@ struct IconCard: View {
         let padding = cardPadding
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
-        Image(systemName: currentVariant.symbolName)
+        Image(systemName: displayVariant.symbolName)
             .font(.system(size: contentSize * 0.65))
             .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
             .symbolRenderingMode(renderingMode.swiftUIMode)
@@ -344,7 +370,7 @@ struct IconCard: View {
             .modifier(VegasSymbolEffects(isActive: vegasMode))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(padding)
-            .id(currentVariant.id)
+            .id(displayVariant.id)
     }
     
     // MARK: - Computed Properties
@@ -439,6 +465,39 @@ struct IconCard: View {
     }
 }
 
+// MARK: - Variant Indicator Button Component
+private struct VariantIndicatorButton: View {
+    let icon: String
+    let isActive: Bool
+    let alignment: Alignment
+    let size: CGFloat
+    let onTap: () -> Void
+    let onDragChanged: (CGPoint) -> Void
+    let onDragEnded: () -> Void
+    
+    var body: some View {
+        Image(systemName: icon)
+            .font(.system(size: size))
+            .foregroundStyle(isActive ? .primary : .secondary)
+            .scaleEffect(isActive ? 1.3 : 1.0)
+            .frame(width: 44, height: 44) // Fixed frame for consistent hit area
+            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+            .onTapGesture {
+                onTap()
+            }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        onDragChanged(value.location)
+                    }
+                    .onEnded { _ in
+                        onDragEnded()
+                    }
+            )
+    }
+}
+
 #Preview {
     VStack(spacing: 20) {
         LazyVGrid(
@@ -453,8 +512,8 @@ struct IconCard: View {
                 availableVariants: [
                     .base("app"),
                     .fill("app"),
-                    .badge("app", badgeType: .badgePlus),
-                    .badge("app", badgeType: .badgeCheckmark)
+                    .badge("app.badge.plus", baseSymbolName: "app"),
+                    .badge("app.badge.checkmark", baseSymbolName: "app")
                 ]
             ) {
                 print("Tapped app")
@@ -468,8 +527,8 @@ struct IconCard: View {
                 availableVariants: [
                     .base("folder"),
                     .fill("folder"),
-                    .badge("folder", badgeType: .badge),
-                    .badge("folder", badgeType: .badgePlus)
+                    .badge("folder.badge", baseSymbolName: "folder"),
+                    .badge("folder.badge.gearshape", baseSymbolName: "folder")
                 ]
             ) {
                 print("Tapped folder")
@@ -483,8 +542,7 @@ struct IconCard: View {
                 availableVariants: [
                     .base("bell"),
                     .fill("bell"),
-                    .badge("bell", badgeType: .badge),
-                    .badge("bell", badgeType: .trianglebadgeExclamationmark)
+                    .badge("bell.badge", baseSymbolName: "bell")
                 ]
             ) {
                 print("Tapped bell")

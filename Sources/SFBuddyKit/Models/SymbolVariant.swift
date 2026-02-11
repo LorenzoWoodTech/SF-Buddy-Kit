@@ -36,7 +36,7 @@ extension SymbolVariant {
         SymbolVariant(
             symbolName: symbolName,
             displayName: "Base",
-            badgeIcon: "circle",
+            badgeIcon: nil, // Base doesn't need an icon
             isBase: true,
             variantType: .base
         )
@@ -53,61 +53,64 @@ extension SymbolVariant {
         )
     }
     
-    /// Create badge variant with appropriate icon
-    static func badge(_ baseSymbolName: String, badgeType: BadgeType) -> SymbolVariant {
-        let suffix = badgeType.suffix
-        let fullName = baseSymbolName + suffix
+    /// Create badge variant by parsing the badge icon from the symbol name
+    static func badge(_ fullSymbolName: String, baseSymbolName: String) -> SymbolVariant {
+        // Extract badge icon name from the symbol
+        // e.g., "folder.badge.gearshape" -> "gearshape"
+        // e.g., "app.badge.plus" -> "plus"
+        // e.g., "bell.badge" -> "circle.fill" (default)
+        
+        let badgeIcon = extractBadgeIcon(from: fullSymbolName, base: baseSymbolName)
+        let displayName = extractBadgeDisplayName(from: fullSymbolName)
+        
         return SymbolVariant(
-            symbolName: fullName,
-            displayName: badgeType.displayName,
-            badgeIcon: badgeType.icon,
+            symbolName: fullSymbolName,
+            displayName: displayName,
+            badgeIcon: badgeIcon,
             isBase: false,
             variantType: .badge
         )
     }
-}
-
-enum BadgeType: String, CaseIterable {
-    case badge = ".badge"
-    case badgePlus = ".badge.plus"
-    case badgeMinus = ".badge.minus"
-    case badgeCheckmark = ".badge.checkmark"
-    case badgeXmark = ".badge.xmark"
-    case badgeEllipsis = ".badge.ellipsis"
-    case badgeQuestionmark = ".badge.questionmark"
-    case badgeExclamationmark = ".badge.exclamationmark"
-    case trianglebadgeExclamationmark = ".trianglebadge.exclamationmark"
-    case badgeGearshape = ".badge.gearshape"
     
-    var suffix: String { rawValue }
-    
-    var displayName: String {
-        switch self {
-        case .badge: return "Badge"
-        case .badgePlus: return "Plus"
-        case .badgeMinus: return "Minus"
-        case .badgeCheckmark: return "Check"
-        case .badgeXmark: return "X"
-        case .badgeEllipsis: return "More"
-        case .badgeQuestionmark: return "?"
-        case .badgeExclamationmark: return "!"
-        case .trianglebadgeExclamationmark: return "⚠️"
-        case .badgeGearshape: return "Gear"
+    private static func extractBadgeIcon(from fullSymbol: String, base: String) -> String {
+        // Get everything after the base symbol name
+        let suffix = String(fullSymbol.dropFirst(base.count))
+        
+        // Check for triangle badge first
+        if suffix.contains(".trianglebadge.") {
+            let parts = suffix.components(separatedBy: ".trianglebadge.")
+            if parts.count > 1 {
+                _ = parts[1]
+                // For trianglebadge, use the triangle version if it exists
+                return "exclamationmark.triangle.fill"
+            }
         }
+        
+        // Check for regular badge
+        if suffix.contains(".badge.") {
+            let parts = suffix.components(separatedBy: ".badge.")
+            if parts.count > 1 {
+                let iconName = parts[1]
+                return iconName // Use the actual badge icon name
+            }
+        }
+        
+        // Just ".badge" with no icon specified
+        if suffix == ".badge" {
+            return "circle.fill"
+        }
+        
+        // Fallback
+        return "circle.fill"
     }
     
-    var icon: String {
-        switch self {
-        case .badge: return "circle.fill"
-        case .badgePlus: return "plus"
-        case .badgeMinus: return "minus"
-        case .badgeCheckmark: return "checkmark"
-        case .badgeXmark: return "xmark"
-        case .badgeEllipsis: return "ellipsis"
-        case .badgeQuestionmark: return "questionmark"
-        case .badgeExclamationmark: return "exclamationmark"
-        case .trianglebadgeExclamationmark: return "exclamationmark.triangle.fill"
-        case .badgeGearshape: return "gearshape"
+    private static func extractBadgeDisplayName(from fullSymbol: String) -> String {
+        if fullSymbol.contains(".badge.") {
+            let parts = fullSymbol.components(separatedBy: ".badge.")
+            if parts.count > 1 {
+                return parts[1].capitalized
+            }
         }
+        return "Badge"
     }
 }
