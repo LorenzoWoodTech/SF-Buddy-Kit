@@ -1,0 +1,1111 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.SFBuddyKit-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/sources",
+      "importPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFBuddyKit.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolBrowserView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolPackageSettings.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SharedSymbolComponents.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SymbolPickerView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/VegasSettings.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules/SFSafeSymbols.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "SFBuddyKit",
+      "moduleOutputPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules/SFBuddyKit.swiftmodule",
+      "objects" : [
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j16",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/include/SFBuddyKit-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "sfbuddykit"
+      ],
+      "outputFileMapPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules/SFBuddyKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFBuddyKit.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolBrowserView.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolPackageSettings.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolService.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SharedSymbolComponents.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SymbolPickerView.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/VegasSettings.swift"
+      ],
+      "tempsPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.SFSafeSymbols-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/sources",
+      "importPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/AppKit/NSImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUIImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUILabelExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIApplicationShortcutIconExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolLocalizations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolWithLocalizations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "SFSafeSymbols",
+      "moduleOutputPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules/SFSafeSymbols.swiftmodule",
+      "objects" : [
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/NSImageExtension.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SwiftUIImageExtension.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SwiftUILabelExtension.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/UIApplicationShortcutIconExtension.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/UIImageExtension.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+1.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+1.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.3.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.3.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+1.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+1.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.3.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.0.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.1.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.2.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.3.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SymbolLocalizations.swift.o",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SymbolWithLocalizations.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.14",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j16",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/include/SFSafeSymbols-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-package-name",
+        "sfsafesymbols"
+      ],
+      "outputFileMapPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/NSImageExtension.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SwiftUIImageExtension.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SwiftUILabelExtension.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/UIApplicationShortcutIconExtension.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/UIImageExtension.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+1.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+1.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+2.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+3.3.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+4.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+5.3.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+1.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+1.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+2.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+3.3.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+4.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.0.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.1.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.2.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols+5.3.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol+AllSymbols.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SFSymbol.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SymbolLocalizations.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/SymbolWithLocalizations.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules/SFSafeSymbols.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/AppKit/NSImageExtension.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUIImageExtension.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUILabelExtension.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIApplicationShortcutIconExtension.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIImageExtension.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.3.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.3.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.3.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.0.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.1.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.2.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.3.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolLocalizations.swift",
+        "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolWithLocalizations.swift"
+      ],
+      "tempsPath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "SFBuddyKit" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "SFBuddyKit",
+      "-package-name",
+      "sfbuddykit",
+      "-c",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFBuddyKit.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolBrowserView.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolPackageSettings.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolService.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SharedSymbolComponents.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SymbolPickerView.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/VegasSettings.swift",
+      "-I",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j16",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/include/SFBuddyKit-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "sfbuddykit",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "SFSafeSymbols" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "SFSafeSymbols",
+      "-package-name",
+      "sfsafesymbols",
+      "-c",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/AppKit/NSImageExtension.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUIImageExtension.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUILabelExtension.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIApplicationShortcutIconExtension.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIImageExtension.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.3.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.3.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.3.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.0.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.1.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.2.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.3.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolLocalizations.swift",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolWithLocalizations.swift",
+      "-I",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.14",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j16",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/include/SFSafeSymbols-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-package-name",
+      "sfsafesymbols",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "SFBuddyKit" : [
+      "SFSafeSymbols"
+    ],
+    "SFSafeSymbols" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFBuddyKit.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolBrowserView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolPackageSettings.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SharedSymbolComponents.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SymbolPickerView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/VegasSettings.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/sources"
+    },
+    "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/AppKit/NSImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUIImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/SwiftUI/SwiftUILabelExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIApplicationShortcutIconExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Initializers/UIKit/UIImageExtension.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+1.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+2.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+3.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+4.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+5.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+1.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+2.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+3.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+4.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.0.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.1.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.2.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols+5.3.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol+AllSymbols.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SFSymbol.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolLocalizations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/checkouts/SFSafeSymbols/Sources/SFSafeSymbols/Symbols/SymbolWithLocalizations.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/sources"
+    },
+    "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "sfsafesymbols",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/SFSafeSymbols/SFSafeSymbols",
+          "name" : "SFSafeSymbols"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "e2e28f4e56e1769c2ec3c61c9355fc64eb7a535a",
+            "version" : "5.3.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "SFSafeSymbols"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

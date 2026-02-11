@@ -14,7 +14,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols", from: "5.0.0")
+        .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols", from: "6.2.0")
     ],
     targets: [
         .target(
@@ -26,7 +26,8 @@ let package = Package(
         ),
         .testTarget(
             name: "SFBuddyKitTests",
-            dependencies: ["SFBuddyKit"]
+            dependencies: ["SFBuddyKit"],
+            path: "Tests/SFBuddyKitTests"
         )
     ]
 )

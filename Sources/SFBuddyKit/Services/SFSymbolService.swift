@@ -11,33 +11,6 @@ import UIKit
 #endif
 import Combine
 
-enum ServiceRenderingMode: String, CaseIterable, Identifiable {
-    case monochrome, hierarchical, palette, multicolor
-    var id: String { self.rawValue }
-
-    var displayName: String {
-        switch self {
-        case .monochrome: return "Monochrome"
-        case .hierarchical: return "Hierarchical"
-        case .palette: return "Palette"
-        case .multicolor: return "Multicolor"
-        }
-    }
-    
-    var iconName: String {
-        switch self {
-        case .monochrome:
-            return "circle"
-        case .hierarchical:
-            return "circle.lefthalf.striped.horizontal"
-        case .palette:
-            return "paintpalette"
-        case .multicolor:
-            return "circle.hexagongrid"
-        }
-    }
-}
-
 @MainActor
 class SFSymbolService: ObservableObject {
     static let shared = SFSymbolService()
@@ -46,7 +19,7 @@ class SFSymbolService: ObservableObject {
     @Published var suggestedSymbols: [SFSymbolSuggestion] = []
     @Published var isProcessing = false
     @Published var lastProcessedText = ""
-    @Published var currentRenderingMode: ServiceRenderingMode = .multicolor
+    @Published var currentRenderingMode: SymbolRenderingMode = .multicolor
     @Published var invalidSymbolNamesFromClaude: [String] = []
     
     @Published var claudeAPIKey: String {

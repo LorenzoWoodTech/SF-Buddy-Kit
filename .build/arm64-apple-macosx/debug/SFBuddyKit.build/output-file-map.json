@@ -1,0 +1,54 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/master.swiftdeps"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFBuddyKit.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFBuddyKit.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolBrowserView.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolBrowserView.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolPackageSettings.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolPackageSettings.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SFSymbolService.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SFSymbolService.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SharedSymbolComponents.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SharedSymbolComponents.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/SymbolPickerView.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/SymbolPickerView.dia"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/Sources/SFBuddyKit/VegasSettings.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKit.build/VegasSettings.dia"
+  }
+}

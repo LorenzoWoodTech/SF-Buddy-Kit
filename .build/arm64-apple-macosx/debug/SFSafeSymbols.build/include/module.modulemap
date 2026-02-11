@@ -1,0 +1,3 @@
+module SFSafeSymbols {
+    header "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFSafeSymbols.build/include/SFSafeSymbols-Swift.h"
+}
