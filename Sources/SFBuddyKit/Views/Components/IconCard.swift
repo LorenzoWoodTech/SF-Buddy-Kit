@@ -239,8 +239,12 @@ struct IconCard: View {
                             if isFillIndicator {
                                 // Highlight if we're showing any filled version
                                 return isShowingFill
+                            } else if variant.variantType == .badge {
+                                // For badges, only highlight if EXACTLY this badge variant is selected
+                                // Don't strip .fill - we want exact match
+                                return currentVariant.symbolName == variant.symbolName
                             } else {
-                                // For other variants, highlight if this is the selected variant (excluding fills)
+                                // For other variants (slash, circle), highlight if this is the selected variant (excluding fills)
                                 let currentBaseName = currentVariant.symbolName.replacingOccurrences(of: ".fill", with: "")
                                 let variantBaseName = variant.symbolName.replacingOccurrences(of: ".fill", with: "")
                                 return currentBaseName == variantBaseName
