@@ -17,7 +17,9 @@ struct IconCard: View {
     let vegasMode: Bool
     let gridScale: Double
     let renderingMode: SymbolRenderingMode
-    let justCopied: Bool
+    let showTitle: Bool
+    let hasFillVariant: Bool
+    let onHover: (Bool) -> Void
     let action: () -> Void
     
     @Environment(VegasSettings.self) private var appSettings
@@ -36,7 +38,9 @@ struct IconCard: View {
         vegasMode: Bool = false,
         gridScale: Double = 0.5,
         renderingMode: SymbolRenderingMode = .hierarchical,
-        justCopied: Bool = false,
+        showTitle: Bool = false,
+        hasFillVariant: Bool = false,
+        onHover: @escaping (Bool) -> Void = { _ in },
         action: @escaping () -> Void
     ) {
         self.symbolName = symbolName
@@ -45,41 +49,54 @@ struct IconCard: View {
         self.vegasMode = vegasMode
         self.gridScale = gridScale
         self.renderingMode = renderingMode
-        self.justCopied = justCopied
+        self.showTitle = showTitle
+        self.hasFillVariant = hasFillVariant
+        self.onHover = onHover
         self.action = action
     }
     
     var body: some View {
         Button(action: action) {
-            ZStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
                 GeometryReader { geometry in
                     cardContent(availableSize: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height)
                 }
                 .aspectRatio(1.0, contentMode: .fit)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.3)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(symbolColor.opacity(isSelected ? 0.12 : 0))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(strokeColor, lineWidth: strokeWidth)
+                )
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .overlay(alignment: .topTrailing) {
+                    if hasFillVariant {
+                        Image(systemName: "paintbrush.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                            .padding(6)
+                            .opacity(isHovered ? 0 : 0.6)
+                            .animation(.easeInOut(duration: 0.2), value: isHovered)
+                    }
+                }
                 
-                // Floating tooltip at bottom
-                if isHovered && !justCopied {
+                // Optional title below card (outside the card background)
+                if showTitle {
                     Text(symbolName)
-                        .font(.caption2)
+                        .font(.callout)
                         .lineLimit(1)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .padding(.bottom, 6)
-                        .transition(.scale.combined(with: .opacity))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(symbolColor.opacity(isSelected ? 0.12 : 0))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(strokeColor, lineWidth: strokeWidth)
-            )
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.95 : 1.0)
@@ -95,6 +112,7 @@ struct IconCard: View {
             withAnimation(.spring(duration: 0.25)) {
                 isHovered = hovering
             }
+            onHover(hovering)
             #if os(macOS)
             if hovering && !isHovered {
                 NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
@@ -133,30 +151,19 @@ struct IconCard: View {
         let padding = cardPadding
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
-        if justCopied {
-            VStack(spacing: 4) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: contentSize * 0.6))
-                    .foregroundColor(.green)
-                Text("Copied!")
-                    .font(.caption2)
-                    .foregroundColor(.green)
-            }
+        // Display fill variant when hovering if available
+        let displaySymbol = (isHovered && hasFillVariant) ? symbolName + ".fill" : symbolName
+        
+        Image(systemName: displaySymbol)
+            .font(.system(size: contentSize * 0.65))
+            .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
+            .symbolRenderingMode(renderingMode.swiftUIMode)
+            .scaleEffect(vegasMode ? animationScale : 1)
+            .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
+            .offset(x: vegasMode ? animationOffset : 0)
+            .modifier(VegasSymbolEffects(isActive: vegasMode))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(padding)
-        } else {
-            // Always show symbol - never replace with text
-            Image(systemName: symbolName)
-                .font(.system(size: contentSize * 0.65))
-                .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
-                .symbolRenderingMode(renderingMode.swiftUIMode)
-                .scaleEffect(vegasMode ? animationScale : 1)
-                .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
-                .offset(x: vegasMode ? animationOffset : 0)
-                .modifier(VegasSymbolEffects(isActive: vegasMode))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(padding)
-        }
     }
     
     // MARK: - Computed Properties
@@ -263,7 +270,7 @@ struct IconCard: View {
                 symbolName: "heart.fill",
                 symbolColor: .red,
                 gridScale: 0.5,
-                renderingMode: .multicolor
+                renderingMode: .automatic
             ) {
                 print("Tapped heart")
             }
@@ -283,7 +290,7 @@ struct IconCard: View {
                 symbolColor: .orange,
                 vegasMode: false,
                 gridScale: 0.5,
-                renderingMode: .multicolor
+                renderingMode: .automatic
             ) {
                 print("Tapped bolt")
             }
@@ -292,7 +299,7 @@ struct IconCard: View {
                 symbolName: "flame.fill",
                 symbolColor: .red,
                 gridScale: 0.5,
-                renderingMode: .multicolor
+                renderingMode: .automatic
             ) {
                 print("Tapped flame")
             }

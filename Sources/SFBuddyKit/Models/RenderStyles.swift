@@ -64,37 +64,50 @@ public enum SymbolGridSize: String, CaseIterable, Identifiable {
 
 // MARK: - Symbol Rendering Mode (Unified)
 public enum SymbolRenderingMode: String, CaseIterable, Identifiable {
+    case automatic = "automatic"
     case monochrome = "monochrome"
     case hierarchical = "hierarchical"
     case palette = "palette"
-    case multicolor = "multicolor"
+    case vegas = "vegas"
     
     public var id: String { rawValue }
     
     public var displayName: String {
         switch self {
+        case .automatic: return "Automatic"
         case .monochrome: return "Monochrome"
         case .hierarchical: return "Hierarchical"
         case .palette: return "Palette"
-        case .multicolor: return "Multicolor"
+        case .vegas: return "Vegas"
         }
     }
     
     public var iconName: String {
         switch self {
+        case .automatic: return "circle.hexagongrid"
         case .monochrome: return "circle"
         case .hierarchical: return "circle.lefthalf.striped.horizontal"
         case .palette: return "paintpalette"
-        case .multicolor: return "circle.hexagongrid"
+        case .vegas: return "sparkles"
         }
     }
     
     public var swiftUIMode: SwiftUI.SymbolRenderingMode {
         switch self {
+        case .automatic: return .multicolor
         case .monochrome: return .monochrome
         case .hierarchical: return .hierarchical
         case .palette: return .palette
-        case .multicolor: return .multicolor
+        case .vegas: return .hierarchical
+        }
+    }
+    
+    public var supportsColorCustomization: Bool {
+        switch self {
+        case .monochrome, .hierarchical, .palette:
+            return true
+        case .automatic, .vegas:
+            return false
         }
     }
 }

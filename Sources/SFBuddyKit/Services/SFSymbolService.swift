@@ -90,7 +90,7 @@ class SFSymbolService: ObservableObject {
     @Published var suggestedSymbols: [SFSymbolSuggestion] = []
     @Published var isProcessing = false
     @Published var lastProcessedText = ""
-    @Published var currentRenderingMode: SymbolRenderingMode = .multicolor
+    @Published var currentRenderingMode: SymbolRenderingMode = .automatic
     @Published var invalidSymbolNamesFromClaude: [String] = []
     
     @Published var currentError: AIServiceError = .none

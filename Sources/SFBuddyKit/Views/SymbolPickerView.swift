@@ -47,6 +47,8 @@ public struct SymbolPickerView: View {
     @State private var vegasMode = false
     @State private var gridScale: Double = 0.5 // 0 = smallest (8 cols), 1 = largest (1 col)
     @State private var justCopiedSymbolName: String?
+    @State private var hoveredSymbolName: String?
+    @State private var showTitles = false
     @State private var debouncedFilteredSymbols: [String] = []
     @State private var filterTask: Task<Void, Never>?
     @State private var showingSettings = false
@@ -54,6 +56,9 @@ public struct SymbolPickerView: View {
     
     private let showDismissButton: Bool
     private let mode: PickerMode
+    
+    // Control height constant
+    private let controlHeight: CGFloat = 20
     
     public enum PickerMode {
         case browser // Select and dismiss
@@ -84,6 +89,7 @@ public struct SymbolPickerView: View {
             #if os(macOS)
             .navigationSplitViewColumnWidth(min: 50, ideal: 50, max: 50)
             #endif
+            .safeAreaPadding(.vertical, 8)
         } detail: {
             // Main content area - ScrollView with floating toolbar
             symbolGridView
@@ -91,6 +97,23 @@ public struct SymbolPickerView: View {
                     VStack(spacing: 0) {
                         searchBar
                         controlBar
+                    }
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if let displayName = hoveredSymbolName ?? justCopiedSymbolName {
+                        HStack {
+                            Spacer()
+                            Text(displayName)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+                            Spacer()
+                        }
+                        .padding(.bottom, 12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
                 .navigationTitle("SF Symbols")
@@ -109,7 +132,7 @@ public struct SymbolPickerView: View {
                 .foregroundStyle(.secondary)
                 .font(.body)
             
-            TextField("Search locally or press Enter for AI suggestions...", text: $searchText)
+            TextField("Enter to generate suggestions...", text: $searchText)
                 .textFieldStyle(.plain)
                 .onSubmit {
                     if !searchText.isEmpty {
@@ -130,9 +153,10 @@ public struct SymbolPickerView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+        .frame(maxWidth: 400)
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 8)
@@ -176,7 +200,108 @@ public struct SymbolPickerView: View {
     // MARK: - Control Bar
     private var controlBar: some View {
         HStack(spacing: 12) {
+            // Rendering Mode + Color Palette in one glass island
+            HStack(spacing: 8) {
+                // Rendering Mode Menu
+                Menu {
+                    ForEach(SymbolRenderingMode.allCases) { mode in
+                        Button {
+                            symbolService.currentRenderingMode = mode
+                            if mode == .vegas {
+                                vegasMode = true
+                            } else {
+                                vegasMode = false
+                            }
+                        } label: {
+                            HStack {
+                                if symbolService.currentRenderingMode == mode {
+                                    Image(systemName: "checkmark")
+                                }
+                                Label(mode.displayName, systemImage: mode.iconName)
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "paintpalette")
+                            .font(.caption)
+                            .foregroundStyle(.primary)
+                        Text(symbolService.currentRenderingMode.displayName)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(height: controlHeight)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                
+                // Color Palette (only visible for modes that support color customization)
+                if symbolService.currentRenderingMode.supportsColorCustomization {
+                    Divider()
+                        .frame(height: 16)
+                    
+                    Menu {
+                        Section("Color") {
+                            ControlGroup {
+                                ForEach(colorPaletteFirstRow, id: \.0) { colorName, color in
+                                    Button {
+                                        selectedColor = color
+                                    } label: {
+                                        Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
+                                    }
+                                    .tint(color)
+                                }
+                            }
+                            .controlGroupStyle(.palette)
+                            
+                            ControlGroup {
+                                ForEach(colorPaletteSecondRow, id: \.0) { colorName, color in
+                                    Button {
+                                        selectedColor = color
+                                    } label: {
+                                        Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
+                                    }
+                                    .tint(color)
+                                }
+                            }
+                            .controlGroupStyle(.palette)
+                        }
+                    } label: {
+                        Circle()
+                            .fill(selectedColor)
+                            .frame(width: 16, height: 16)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+            
             Spacer()
+            
+            // Show Titles Toggle
+            Button {
+                withAnimation(.spring(duration: 0.3)) {
+                    showTitles.toggle()
+                }
+            } label: {
+                Image(systemName: "textformat")
+                    .font(.body)
+                    .foregroundStyle(showTitles ? Color.accentColor : .secondary)
+                    .frame(height: controlHeight)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+            .help("Show symbol names")
             
             // Grid size slider with icons
             HStack(spacing: 8) {
@@ -191,100 +316,14 @@ public struct SymbolPickerView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .frame(height: controlHeight)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 8))
-            
-            Menu {
-                // Rendering Mode Section
-                Section("Rendering Mode") {
-                    ForEach(SymbolRenderingMode.allCases) { mode in
-                        Button {
-                            symbolService.currentRenderingMode = mode
-                        } label: {
-                            HStack {
-                                if symbolService.currentRenderingMode == mode {
-                                    Image(systemName: "checkmark")
-                                }
-                                Label(mode.displayName, systemImage: mode.iconName)
-                            }
-                        }
-                    }
-                }
-                
-                // Color Section
-                Section("Color") {
-                    ControlGroup {
-                        ForEach(colorPaletteFirstRow, id: \.0) { colorName, color in
-                            Button {
-                                selectedColor = color
-                            } label: {
-                                Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
-                            }
-                            .tint(color)
-                        }
-                    }
-                    .controlGroupStyle(.palette)
-                    
-                    ControlGroup {
-                        ForEach(colorPaletteSecondRow, id: \.0) { colorName, color in
-                            Button {
-                                selectedColor = color
-                            } label: {
-                                Label(colorName, systemImage: selectedColor == color ? "circle.fill" : "circle")
-                            }
-                            .tint(color)
-                        }
-                    }
-                    .controlGroupStyle(.palette)
-                }
-                
-                // Vegas Mode Submenu
-                Menu {
-                    Button {
-                        withAnimation(.bouncy) {
-                            vegasMode.toggle()
-                        }
-                    } label: {
-                        HStack {
-                            if vegasMode {
-                                Image(systemName: "checkmark")
-                            }
-                            Label("Vegas Mode", systemImage: "sparkles")
-                        }
-                    }
-                    
-                    Divider()
-                    
-                    Button {
-                        VegasSettings.shared.triggerVegasChaos()
-                    } label: {
-                        Label("Trigger Chaos", systemImage: "flame")
-                    }
-                    .disabled(!vegasMode)
-                    
-                    Button {
-                        VegasSettings.shared.randomizeVegas()
-                    } label: {
-                        Label("Randomize Settings", systemImage: "dice")
-                    }
-                    .disabled(!vegasMode)
-                } label: {
-                    Label("Vegas Mode", systemImage: "sparkles")
-                }
-            } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 8))
-            }
-            .buttonStyle(.plain)
-            
-            Spacer()
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        .animation(.spring(duration: 0.3), value: symbolService.currentRenderingMode.supportsColorCustomization)
     }
     
     // MARK: - Color Palette Data
@@ -353,7 +392,7 @@ public struct SymbolPickerView: View {
                                 repeating: GridItem(.flexible(), spacing: 10),
                                 count: columnCount
                             ),
-                            spacing: 10
+                            spacing: 16
                         ) {
                             ForEach(aiSuggestedSymbols) { suggestion in
                                 IconCard(
@@ -363,12 +402,16 @@ public struct SymbolPickerView: View {
                                     vegasMode: vegasMode,
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
-                                    justCopied: justCopiedSymbolName == suggestion.name
+                                    showTitle: showTitles,
+                                    hasFillVariant: hasFillVariant(suggestion.name),
+                                    onHover: { isHovering in
+                                        hoveredSymbolName = isHovering ? suggestion.name : nil
+                                    }
                                 ) {
                                     handleSymbolTap(suggestion.name)
                                 }
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
+                                    RoundedRectangle(cornerRadius: 16)
                                         .stroke(Color.purple.opacity(0.3), lineWidth: 1.5)
                                 )
                             }
@@ -423,7 +466,7 @@ public struct SymbolPickerView: View {
                                 repeating: GridItem(.flexible(), spacing: 10),
                                 count: columnCount
                             ),
-                            spacing: 10
+                            spacing: 16
                         ) {
                             ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
                                 IconCard(
@@ -433,7 +476,11 @@ public struct SymbolPickerView: View {
                                     vegasMode: vegasMode,
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
-                                    justCopied: justCopiedSymbolName == symbolName
+                                    showTitle: showTitles,
+                                    hasFillVariant: hasFillVariant(symbolName),
+                                    onHover: { isHovering in
+                                        hoveredSymbolName = isHovering ? symbolName : nil
+                                    }
                                 ) {
                                     handleSymbolTap(symbolName)
                                 }
@@ -646,6 +693,8 @@ public struct SymbolPickerView: View {
         let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
         var symbols = allSymbols
         
+        symbols = symbols.filter { !$0.hasSuffix(".fill") }
+        
         if selectedCategory != .all {
             symbols = symbols.filter { symbolName in
                 symbolBelongsToCategory(symbolName, category: selectedCategory)
@@ -659,7 +708,7 @@ public struct SymbolPickerView: View {
         let maxResults = searchText.isEmpty ? 400 : 800
         let limitedSymbols = Array(symbols.prefix(maxResults))
         
-        // Smart sorting by relevance when searching
+        // Smart sorting by relevance when searching, otherwise by dot count and alphabetically
         if !searchText.isEmpty {
             let sorted = limitedSymbols.sorted { symbol1, symbol2 in
                 let score1 = symbolRelevanceScore(symbol1, searchTerm: searchText)
@@ -668,8 +717,38 @@ public struct SymbolPickerView: View {
             }
             debouncedFilteredSymbols = sorted
         } else {
-            debouncedFilteredSymbols = limitedSymbols
+            // Sort by dot count first, then alphabetically
+            let sorted = limitedSymbols.sorted { symbol1, symbol2 in
+                let dots1 = symbol1.filter { $0 == "." }.count
+                let dots2 = symbol2.filter { $0 == "." }.count
+                
+                if dots1 != dots2 {
+                    return dots1 < dots2
+                } else {
+                    return symbol1.localizedStandardCompare(symbol2) == .orderedAscending
+                }
+            }
+            debouncedFilteredSymbols = sorted
         }
+    }
+    
+    // MARK: - Fill Variant Detection
+    private func hasFillVariant(_ symbolName: String) -> Bool {
+        // Don't show fill indicator if the symbol already contains "fill"
+        guard !symbolName.contains("fill") else { return false }
+        
+        // Check if a .fill variant exists for this symbol
+        let fillVariant = symbolName + ".fill"
+        let exists = SFSymbol.allSymbols.contains { $0.rawValue == fillVariant }
+        
+        // Additional validation: the fill variant should actually be different when rendered
+        // For symbols like "1.circle", ensure "1.circle.fill" exists, not just "circle.fill"
+        return exists
+    }
+    
+    private func getFillVariant(_ symbolName: String) -> String? {
+        let fillVariant = symbolName + ".fill"
+        return hasFillVariant(symbolName) ? fillVariant : nil
     }
     
     // MARK: - Relevance Scoring
@@ -895,7 +974,43 @@ extension String {
     }
 }
 
-#Preview {
+#Preview("Picker Mode - Copies to Clipboard") {
     SymbolPickerView(mode: .picker)
         .environment(VegasSettings.shared)
+}
+
+#Preview("Popover Presentation") {
+    struct PopoverDemo: View {
+        @State private var showingPicker = false
+        @State private var selectedSymbol: String?
+        
+        var body: some View {
+            VStack(spacing: 20) {
+                if let symbol = selectedSymbol {
+                    Text("Selected: \(symbol)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Button {
+                    showingPicker.toggle()
+                } label: {
+                    HStack {
+                        Image(systemName: selectedSymbol ?? "square.grid.3x3")
+                        Text(selectedSymbol ?? "Pick a Symbol")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showingPicker) {
+                    SymbolPickerView(selectedSymbol: $selectedSymbol, mode: .browser)
+                        .frame(width: 800, height: 600)
+                        .environment(VegasSettings.shared)
+                }
+            }
+        }
+    }
+    
+    return PopoverDemo()
 }
