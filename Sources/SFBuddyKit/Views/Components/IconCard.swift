@@ -2,7 +2,7 @@
 //  IconCard.swift
 //  SFBuddyKit
 //
-//  SF Symbol card with hover-to-reveal name functionality
+//  SF Symbol card with hover-to-reveal variant functionality
 //
 
 import SwiftUI
@@ -18,18 +18,31 @@ struct IconCard: View {
     let gridScale: Double
     let renderingMode: SymbolRenderingMode
     let showTitle: Bool
-    let hasFillVariant: Bool
+    let availableVariants: [SymbolVariant]
     let onHover: (Bool) -> Void
+    let onVariantChange: (String) -> Void
     let action: () -> Void
     
     @Environment(VegasSettings.self) private var appSettings
     @State private var isHovered = false
     @State private var isPressed = false
+    @State private var currentVariantIndex: Int = 0
     @State private var animationOffset: CGFloat = 0
     @State private var animationRotation: Double = 0
     @State private var animationScale: CGFloat = 1
     @State private var randomColor: Color = .primary
     @State private var vegasTimer: Timer?
+    
+    private var hasVariants: Bool {
+        !availableVariants.isEmpty
+    }
+    
+    private var currentVariant: SymbolVariant {
+        if hasVariants && currentVariantIndex < availableVariants.count {
+            return availableVariants[currentVariantIndex]
+        }
+        return .base(symbolName)
+    }
     
     init(
         symbolName: String,
@@ -39,8 +52,9 @@ struct IconCard: View {
         gridScale: Double = 0.5,
         renderingMode: SymbolRenderingMode = .hierarchical,
         showTitle: Bool = false,
-        hasFillVariant: Bool = false,
+        availableVariants: [SymbolVariant] = [],
         onHover: @escaping (Bool) -> Void = { _ in },
+        onVariantChange: @escaping (String) -> Void = { _ in },
         action: @escaping () -> Void
     ) {
         self.symbolName = symbolName
@@ -50,17 +64,41 @@ struct IconCard: View {
         self.gridScale = gridScale
         self.renderingMode = renderingMode
         self.showTitle = showTitle
-        self.hasFillVariant = hasFillVariant
+        self.availableVariants = availableVariants
         self.onHover = onHover
+        self.onVariantChange = onVariantChange
         self.action = action
     }
     
     var body: some View {
-        Button(action: action) {
+        Button {
+            // Action uses the currently previewed variant
+            action()
+        } label: {
             VStack(alignment: .leading, spacing: 4) {
                 GeometryReader { geometry in
-                    cardContent(availableSize: geometry.size)
-                        .frame(width: geometry.size.width, height: geometry.size.height)
+                    ZStack {
+                        cardContent(availableSize: geometry.size)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                        
+                        // Badge strip overlay at top
+                        if hasVariants {
+                            badgeStrip
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        }
+                    }
+                    #if os(macOS)
+                    .onContinuousHover { phase in
+                        handleHover(phase: phase, in: geometry.size)
+                    }
+                    #else
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                handleTouch(location: value.location, in: geometry.size)
+                            }
+                    )
+                    #endif
                 }
                 .aspectRatio(1.0, contentMode: .fit)
                 .background(
@@ -77,20 +115,10 @@ struct IconCard: View {
                         .stroke(strokeColor, lineWidth: strokeWidth)
                 )
                 .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                .overlay(alignment: .topTrailing) {
-                    if hasFillVariant {
-                        Image(systemName: "paintbrush.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                            .padding(6)
-                            .opacity(isHovered ? 0 : 0.6)
-                            .animation(.easeInOut(duration: 0.2), value: isHovered)
-                    }
-                }
                 
-                // Optional title below card (outside the card background)
+                // Optional title below card
                 if showTitle {
-                    Text(symbolName)
+                    Text(currentVariant.symbolName)
                         .font(.callout)
                         .lineLimit(1)
                         .foregroundStyle(.primary)
@@ -108,17 +136,6 @@ struct IconCard: View {
                 .onChanged { _ in isPressed = true }
                 .onEnded { _ in isPressed = false }
         )
-        .onHover { hovering in
-            withAnimation(.spring(duration: 0.25)) {
-                isHovered = hovering
-            }
-            onHover(hovering)
-            #if os(macOS)
-            if hovering && !isHovered {
-                NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-            }
-            #endif
-        }
         .onAppear {
             if vegasMode {
                 startVegasAnimations()
@@ -143,6 +160,68 @@ struct IconCard: View {
         .onChange(of: appSettings.vegasRotationEnabled) { _, _ in
             if vegasMode { restartVegasAnimations() }
         }
+        .onChange(of: currentVariantIndex) { _, _ in
+            onVariantChange(currentVariant.symbolName)
+        }
+    }
+    
+    // MARK: - Badge Strip
+    @ViewBuilder
+    private var badgeStrip: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
+                if let badgeIcon = variant.badgeIcon {
+                    Image(systemName: badgeIcon)
+                        .font(.system(size: 8))
+                        .foregroundStyle(index == currentVariantIndex ? .primary : .tertiary)
+                        .scaleEffect(index == currentVariantIndex ? 1.2 : 1.0)
+                        .animation(.spring(duration: 0.2), value: currentVariantIndex)
+                }
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .padding(6)
+        .opacity(isHovered ? 1 : 0.6)
+    }
+    
+    // MARK: - Hover/Touch Handling
+    #if os(macOS)
+    private func handleHover(phase: HoverPhase, in size: CGSize) {
+        switch phase {
+        case .active(let location):
+            isHovered = true
+            onHover(true)
+            updateVariantFromLocation(location, in: size)
+            
+        case .ended:
+            isHovered = false
+            onHover(false)
+            // Reset to base variant when hover ends
+            currentVariantIndex = 0
+        }
+    }
+    #else
+    private func handleTouch(location: CGPoint, in size: CGSize) {
+        isHovered = true
+        updateVariantFromLocation(location, in: size)
+    }
+    #endif
+    
+    private func updateVariantFromLocation(_ location: CGPoint, in size: CGSize) {
+        guard hasVariants else { return }
+        
+        let segmentWidth = size.width / CGFloat(availableVariants.count)
+        let newIndex = min(Int(location.x / segmentWidth), availableVariants.count - 1)
+        
+        if newIndex != currentVariantIndex && newIndex >= 0 {
+            currentVariantIndex = newIndex
+            
+            #if os(macOS)
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+            #endif
+        }
     }
     
     // MARK: - Card Content
@@ -151,10 +230,7 @@ struct IconCard: View {
         let padding = cardPadding
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
-        // Display fill variant when hovering if available
-        let displaySymbol = (isHovered && hasFillVariant) ? symbolName + ".fill" : symbolName
-        
-        Image(systemName: displaySymbol)
+        Image(systemName: currentVariant.symbolName)
             .font(.system(size: contentSize * 0.65))
             .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
             .symbolRenderingMode(renderingMode.swiftUIMode)
@@ -164,6 +240,7 @@ struct IconCard: View {
             .modifier(VegasSymbolEffects(isActive: vegasMode))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(padding)
+            .id(currentVariant.id)
     }
     
     // MARK: - Computed Properties
@@ -261,51 +338,69 @@ struct IconCard: View {
 
 #Preview {
     VStack(spacing: 20) {
-        // Preview with flexible grid
         LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4),
             spacing: 12
         ) {
             IconCard(
-                symbolName: "heart.fill",
+                symbolName: "app",
+                symbolColor: .blue,
+                gridScale: 0.5,
+                renderingMode: .hierarchical,
+                availableVariants: [
+                    .base("app"),
+                    .fill("app"),
+                    .badge("app", badgeType: .badgePlus),
+                    .badge("app", badgeType: .badgeCheckmark)
+                ]
+            ) {
+                print("Tapped app")
+            }
+            
+            IconCard(
+                symbolName: "folder",
+                symbolColor: .cyan,
+                gridScale: 0.5,
+                renderingMode: .hierarchical,
+                availableVariants: [
+                    .base("folder"),
+                    .fill("folder"),
+                    .badge("folder", badgeType: .badge),
+                    .badge("folder", badgeType: .badgePlus)
+                ]
+            ) {
+                print("Tapped folder")
+            }
+            
+            IconCard(
+                symbolName: "bell",
+                symbolColor: .orange,
+                gridScale: 0.5,
+                renderingMode: .hierarchical,
+                availableVariants: [
+                    .base("bell"),
+                    .fill("bell"),
+                    .badge("bell", badgeType: .badge)
+                ]
+            ) {
+                print("Tapped bell")
+            }
+            
+            IconCard(
+                symbolName: "heart",
                 symbolColor: .red,
                 gridScale: 0.5,
-                renderingMode: .automatic
+                renderingMode: .hierarchical,
+                availableVariants: [
+                    .base("heart"),
+                    .fill("heart")
+                ]
             ) {
                 print("Tapped heart")
-            }
-            
-            IconCard(
-                symbolName: "star.fill",
-                isSelected: true,
-                symbolColor: .yellow,
-                gridScale: 0.5,
-                renderingMode: .hierarchical
-            ) {
-                print("Tapped star")
-            }
-            
-            IconCard(
-                symbolName: "bolt.fill",
-                symbolColor: .orange,
-                vegasMode: false,
-                gridScale: 0.5,
-                renderingMode: .automatic
-            ) {
-                print("Tapped bolt")
-            }
-            
-            IconCard(
-                symbolName: "flame.fill",
-                symbolColor: .red,
-                gridScale: 0.5,
-                renderingMode: .automatic
-            ) {
-                print("Tapped flame")
             }
         }
         .padding()
     }
-    .frame(width: 400)
+    .frame(width: 500)
     .environment(VegasSettings.shared)
 }

@@ -403,9 +403,12 @@ public struct SymbolPickerView: View {
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     showTitle: showTitles,
-                                    hasFillVariant: hasFillVariant(suggestion.name),
+                                    availableVariants: getAvailableVariants(for: suggestion.name),
                                     onHover: { isHovering in
                                         hoveredSymbolName = isHovering ? suggestion.name : nil
+                                    },
+                                    onVariantChange: { variant in
+                                        hoveredSymbolName = variant
                                     }
                                 ) {
                                     handleSymbolTap(suggestion.name)
@@ -477,9 +480,12 @@ public struct SymbolPickerView: View {
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     showTitle: showTitles,
-                                    hasFillVariant: hasFillVariant(symbolName),
+                                    availableVariants: getAvailableVariants(for: symbolName),
                                     onHover: { isHovering in
                                         hoveredSymbolName = isHovering ? symbolName : nil
+                                    },
+                                    onVariantChange: { variant in
+                                        hoveredSymbolName = variant
                                     }
                                 ) {
                                     handleSymbolTap(symbolName)
@@ -648,9 +654,12 @@ public struct SymbolPickerView: View {
     
     // MARK: - Symbol Handling
     private func handleSymbolTap(_ symbolName: String) {
+        // Use the hovered symbol name which includes any variant suffix
+        let actualSymbolName = hoveredSymbolName ?? symbolName
+        
         switch mode {
         case .browser:
-            selectedSymbol = symbolName
+            selectedSymbol = actualSymbolName
             #if os(iOS)
             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
             impactFeedback.impactOccurred()
@@ -660,16 +669,16 @@ public struct SymbolPickerView: View {
             }
             
         case .picker:
-            symbolService.replaceTextWithSymbol(symbolName)
+            symbolService.replaceTextWithSymbol(actualSymbolName)
             withAnimation {
-                justCopiedSymbolName = symbolName
+                justCopiedSymbolName = actualSymbolName
             }
             
             Task {
                 try? await Task.sleep(for: .seconds(1.5))
                 await MainActor.run {
                     withAnimation {
-                        if justCopiedSymbolName == symbolName {
+                        if justCopiedSymbolName == actualSymbolName {
                             justCopiedSymbolName = nil
                         }
                     }
@@ -693,7 +702,10 @@ public struct SymbolPickerView: View {
         let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
         var symbols = allSymbols
         
-        symbols = symbols.filter { !$0.hasSuffix(".fill") }
+        // Filter out fill and badge variants from main list
+        symbols = symbols.filter { symbolName in
+            !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
+        }
         
         if selectedCategory != .all {
             symbols = symbols.filter { symbolName in
@@ -730,6 +742,31 @@ public struct SymbolPickerView: View {
             }
             debouncedFilteredSymbols = sorted
         }
+    }
+    
+    // MARK: - Variant Detection
+    private func getAvailableVariants(for symbolName: String) -> [SymbolVariant] {
+        var variants: [SymbolVariant] = []
+        let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
+        
+        // Always include base variant first
+        variants.append(.base(symbolName))
+        
+        // Check for fill variant
+        if hasFillVariant(symbolName) {
+            variants.append(.fill(symbolName))
+        }
+        
+        // Check for badge variants
+        for badgeType in BadgeType.allCases {
+            let badgeVariant = symbolName + badgeType.suffix
+            if allSymbols.contains(badgeVariant) {
+                variants.append(.badge(symbolName, badgeType: badgeType))
+            }
+        }
+        
+        // Return empty array if only base variant exists (no need to show variant UI)
+        return variants.count > 1 ? variants : []
     }
     
     // MARK: - Fill Variant Detection

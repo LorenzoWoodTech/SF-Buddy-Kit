@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/master.swiftdeps"
+  },
+  "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/runner.d",
+    "object": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/lorenzo/Developer/Frameworks/SFBuddyKit/.build/arm64-apple-macosx/debug/SFBuddyKitPackageTests.build/runner.dia"
+  }
+}
