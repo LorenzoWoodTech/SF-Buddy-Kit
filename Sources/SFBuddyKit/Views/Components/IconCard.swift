@@ -32,6 +32,7 @@ struct IconCard: View {
     @State private var animationScale: CGFloat = 1
     @State private var randomColor: Color = .primary
     @State private var vegasTimer: Timer?
+    @State private var showCopyFeedback = false
     
     private var hasVariants: Bool {
         !availableVariants.isEmpty
@@ -72,8 +73,21 @@ struct IconCard: View {
     
     var body: some View {
         Button {
-            // Action uses the currently previewed variant
             action()
+            
+            // Show copy feedback
+            withAnimation(.spring(duration: 0.3)) {
+                showCopyFeedback = true
+            }
+            
+            Task {
+                try? await Task.sleep(for: .seconds(0.5))
+                await MainActor.run {
+                    withAnimation(.spring(duration: 0.3)) {
+                        showCopyFeedback = false
+                    }
+                }
+            }
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 GeometryReader { geometry in
@@ -81,10 +95,23 @@ struct IconCard: View {
                         cardContent(availableSize: geometry.size)
                             .frame(width: geometry.size.width, height: geometry.size.height)
                         
-                        // Badge strip overlay at top
+                        // Corner variant indicators
                         if hasVariants {
-                            badgeStrip
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            variantIndicators
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                        
+                        // Copy feedback overlay
+                        if showCopyFeedback {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(.green.opacity(0.2))
+                                .overlay(
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: geometry.size.width * 0.4))
+                                        .foregroundStyle(.green)
+                                        .symbolEffect(.bounce, value: showCopyFeedback)
+                                )
+                                .transition(.scale.combined(with: .opacity))
                         }
                     }
                     #if os(macOS)
@@ -165,25 +192,34 @@ struct IconCard: View {
         }
     }
     
-    // MARK: - Badge Strip
+    // MARK: - Variant Indicators (Corner Positioning)
     @ViewBuilder
-    private var badgeStrip: some View {
-        HStack(spacing: 4) {
+    private var variantIndicators: some View {
+        ZStack {
             ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
                 if let badgeIcon = variant.badgeIcon {
                     Image(systemName: badgeIcon)
-                        .font(.system(size: 8))
+                        .font(.system(size: indicatorSize))
                         .foregroundStyle(index == currentVariantIndex ? .primary : .tertiary)
-                        .scaleEffect(index == currentVariantIndex ? 1.2 : 1.0)
+                        .scaleEffect(index == currentVariantIndex ? 1.3 : 1.0)
                         .animation(.spring(duration: 0.2), value: currentVariantIndex)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: cornerAlignment(for: index))
+                        .padding(8)
+                        .opacity(isHovered ? 1 : 0.4)
                 }
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-        .padding(6)
-        .opacity(isHovered ? 1 : 0.6)
+    }
+    
+    private var indicatorSize: CGFloat {
+        // Scale indicator size based on grid scale
+        return 10 + (gridScale * 4)
+    }
+    
+    private func cornerAlignment(for index: Int) -> Alignment {
+        // Distribute variants around corners clockwise from top-left
+        let positions: [Alignment] = [.topLeading, .topTrailing, .bottomTrailing, .bottomLeading]
+        return positions[index % positions.count]
     }
     
     // MARK: - Hover/Touch Handling
@@ -380,7 +416,8 @@ struct IconCard: View {
                 availableVariants: [
                     .base("bell"),
                     .fill("bell"),
-                    .badge("bell", badgeType: .badge)
+                    .badge("bell", badgeType: .badge),
+                    .badge("bell", badgeType: .trianglebadgeExclamationmark)
                 ]
             ) {
                 print("Tapped bell")

@@ -13,12 +13,20 @@ struct SymbolVariant: Identifiable, Hashable {
     let displayName: String
     let badgeIcon: String?
     let isBase: Bool
+    let variantType: VariantType
     
-    init(symbolName: String, displayName: String, badgeIcon: String? = nil, isBase: Bool = false) {
+    init(symbolName: String, displayName: String, badgeIcon: String? = nil, isBase: Bool = false, variantType: VariantType = .base) {
         self.symbolName = symbolName
         self.displayName = displayName
         self.badgeIcon = badgeIcon
         self.isBase = isBase
+        self.variantType = variantType
+    }
+    
+    enum VariantType {
+        case base
+        case fill
+        case badge
     }
 }
 
@@ -29,7 +37,8 @@ extension SymbolVariant {
             symbolName: symbolName,
             displayName: "Base",
             badgeIcon: "circle",
-            isBase: true
+            isBase: true,
+            variantType: .base
         )
     }
     
@@ -38,8 +47,9 @@ extension SymbolVariant {
         SymbolVariant(
             symbolName: baseSymbolName + ".fill",
             displayName: "Fill",
-            badgeIcon: "circle.fill",
-            isBase: false
+            badgeIcon: "paintbrush.fill",
+            isBase: false,
+            variantType: .fill
         )
     }
     
@@ -51,7 +61,8 @@ extension SymbolVariant {
             symbolName: fullName,
             displayName: badgeType.displayName,
             badgeIcon: badgeType.icon,
-            isBase: false
+            isBase: false,
+            variantType: .badge
         )
     }
 }
@@ -65,6 +76,7 @@ enum BadgeType: String, CaseIterable {
     case badgeEllipsis = ".badge.ellipsis"
     case badgeQuestionmark = ".badge.questionmark"
     case badgeExclamationmark = ".badge.exclamationmark"
+    case trianglebadgeExclamationmark = ".trianglebadge.exclamationmark"
     
     var suffix: String { rawValue }
     
@@ -78,19 +90,21 @@ enum BadgeType: String, CaseIterable {
         case .badgeEllipsis: return "More"
         case .badgeQuestionmark: return "?"
         case .badgeExclamationmark: return "!"
+        case .trianglebadgeExclamationmark: return "⚠️"
         }
     }
     
     var icon: String {
         switch self {
-        case .badge: return "app.badge"
-        case .badgePlus: return "plus.circle.fill"
-        case .badgeMinus: return "minus.circle.fill"
-        case .badgeCheckmark: return "checkmark.circle.fill"
-        case .badgeXmark: return "xmark.circle.fill"
-        case .badgeEllipsis: return "ellipsis.circle.fill"
-        case .badgeQuestionmark: return "questionmark.circle.fill"
-        case .badgeExclamationmark: return "exclamationmark.circle.fill"
+        case .badge: return "circle.fill"
+        case .badgePlus: return "plus"
+        case .badgeMinus: return "minus"
+        case .badgeCheckmark: return "checkmark"
+        case .badgeXmark: return "xmark"
+        case .badgeEllipsis: return "ellipsis"
+        case .badgeQuestionmark: return "questionmark"
+        case .badgeExclamationmark: return "exclamationmark"
+        case .trianglebadgeExclamationmark: return "exclamationmark.triangle.fill"
         }
     }
 }

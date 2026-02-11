@@ -757,7 +757,7 @@ public struct SymbolPickerView: View {
             variants.append(.fill(symbolName))
         }
         
-        // Check for badge variants
+        // Check for all badge variants (including triangle badges)
         for badgeType in BadgeType.allCases {
             let badgeVariant = symbolName + badgeType.suffix
             if allSymbols.contains(badgeVariant) {
