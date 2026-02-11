@@ -53,6 +53,7 @@ public struct SymbolPickerView: View {
     @State private var filterTask: Task<Void, Never>?
     @State private var showingSettings = false
     @State private var showingInlineConfig = false
+    @State private var groupVariants = false
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -285,10 +286,34 @@ public struct SymbolPickerView: View {
             
             Spacer()
             
-            // Show Titles Toggle
-            Button {
-                withAnimation(.spring(duration: 0.3)) {
-                    showTitles.toggle()
+            // Show Titles Toggle (now a menu)
+            Menu {
+                Button {
+                    withAnimation(.spring(duration: 0.3)) {
+                        showTitles.toggle()
+                    }
+                } label: {
+                    HStack {
+                        if showTitles {
+                            Image(systemName: "checkmark")
+                        }
+                        Text("Show Names Below Icons")
+                    }
+                }
+                
+                Section("Beta Features") {
+                    Button {
+                        withAnimation(.spring(duration: 0.3)) {
+                            groupVariants.toggle()
+                        }
+                    } label: {
+                        HStack {
+                            if groupVariants {
+                                Image(systemName: "checkmark")
+                            }
+                            Text("Group Icon Variants")
+                        }
+                    }
                 }
             } label: {
                 Image(systemName: "textformat")
@@ -297,11 +322,12 @@ public struct SymbolPickerView: View {
                     .frame(height: controlHeight)
                     .contentShape(Rectangle())
             }
+            .menuIndicator(.hidden)
             .buttonStyle(.plain)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
-            .help("Show symbol names")
+            .help("Display options")
             
             // Grid size slider with icons
             HStack(spacing: 8) {
@@ -403,7 +429,7 @@ public struct SymbolPickerView: View {
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     showTitle: showTitles,
-                                    availableVariants: getAvailableVariants(for: suggestion.name),
+                                    availableVariants: groupVariants ? getAvailableVariants(for: suggestion.name) : [],
                                     onHover: { isHovering in
                                         hoveredSymbolName = isHovering ? suggestion.name : nil
                                     },
@@ -480,7 +506,7 @@ public struct SymbolPickerView: View {
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     showTitle: showTitles,
-                                    availableVariants: getAvailableVariants(for: symbolName),
+                                    availableVariants: groupVariants ? getAvailableVariants(for: symbolName) : [],
                                     onHover: { isHovering in
                                         hoveredSymbolName = isHovering ? symbolName : nil
                                     },
@@ -699,6 +725,17 @@ public struct SymbolPickerView: View {
         let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
         var symbols = allSymbols
         
+        // Filter out variants from main list only if grouping is enabled
+        if groupVariants {
+            symbols = symbols.filter { symbolName in
+                !symbolName.hasSuffix(".fill") && 
+                !symbolName.contains(".badge") && 
+                !symbolName.hasSuffix(".slash") &&
+                !symbolName.hasSuffix(".circle") &&
+                !symbolName.hasSuffix(".circle.fill")
+            }
+        }
+
         // Filter out fill and badge variants from main list
         symbols = symbols.filter { symbolName in
             !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
