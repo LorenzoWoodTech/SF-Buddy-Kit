@@ -60,13 +60,6 @@ public enum SymbolGridSize: String, CaseIterable, Identifiable {
         case .extraLarge: return (300, 350, 140)
         }
     }
-    
-    public var showNames: Bool {
-        switch self {
-        case .small: return false
-        default: return true
-        }
-    }
 }
 
 // MARK: - Symbol Rendering Mode (Unified)

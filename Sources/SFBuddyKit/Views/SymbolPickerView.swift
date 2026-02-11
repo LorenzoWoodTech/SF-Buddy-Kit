@@ -13,6 +13,27 @@ import AppKit
 import UIKit
 #endif
 
+// MARK: - Liquid Glass Effect Extension
+private extension View {
+    @ViewBuilder
+    func liquidGlassEffect() -> some View {
+        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, watchOS 26.0, *) {
+            self.glassEffect()
+        } else {
+            self.background(.ultraThinMaterial)
+        }
+    }
+    
+    @ViewBuilder
+    func liquidGlassEffect(in shape: some Shape) -> some View {
+        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, watchOS 26.0, *) {
+            self.glassEffect(in: shape)
+        } else {
+            self.background(.ultraThinMaterial, in: shape)
+        }
+    }
+}
+
 public struct SymbolPickerView: View {
     @Binding var selectedSymbol: String?
     @Environment(\.dismiss) private var dismiss
@@ -24,7 +45,7 @@ public struct SymbolPickerView: View {
     @State private var selectedColor: Color = .primary
     @State private var showingCategoryFilter = false
     @State private var vegasMode = false
-    @State private var gridSize: SymbolGridSize = .medium
+    @State private var gridScale: Double = 0.5 // 0 = smallest (8 cols), 1 = largest (1 col)
     @State private var justCopiedSymbolName: String?
     @State private var debouncedFilteredSymbols: [String] = []
     @State private var filterTask: Task<Void, Never>?
@@ -50,69 +71,106 @@ public struct SymbolPickerView: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                controlBar
-                
-                if showingCategoryFilter {
-                    categoryFilterBar
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                symbolGridView
+        NavigationSplitView(columnVisibility: .constant(.all)) {
+            // Sidebar with categories (icon-only)
+            List(SFSymbolCategory.allCases, id: \.rawValue, selection: $selectedCategory) { category in
+                Image(systemName: category.systemImage)
+                    .font(.title3)
+                    .frame(maxWidth: .infinity)
+                    .tag(category)
+                    .help(category.displayName)
             }
-            .navigationTitle("SF Symbols")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.sidebar)
+            #if os(macOS)
+            .navigationSplitViewColumnWidth(min: 50, ideal: 50, max: 50)
             #endif
-            .searchable(text: $searchText, prompt: "Search locally or press Enter for AI suggestions...")
-            .onSubmit(of: .search) {
-                if !searchText.isEmpty {
-                    Task {
-                        await symbolService.processText(searchText)
+        } detail: {
+            // Main content area - ScrollView with floating toolbar
+            symbolGridView
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    VStack(spacing: 0) {
+                        searchBar
+                        controlBar
                     }
                 }
-            }
-            .onChange(of: searchText) { _, newValue in
-                filterTask?.cancel()
-                filterTask = Task {
-                    try? await Task.sleep(for: .milliseconds(150))
-                    if !Task.isCancelled {
-                        await updateFilteredSymbols()
-                    }
-                }
-            }
-            .onChange(of: selectedCategory) { _, _ in
-                filterTask?.cancel()
-                filterTask = Task {
-                    await updateFilteredSymbols()
-                }
-            }
-            .onAppear {
-                Task {
-                    await updateFilteredSymbols()
-                }
-            }
-            .toolbar {
-                if showDismissButton {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                }
-                
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showingCategoryFilter.toggle()
+                .navigationTitle("SF Symbols")
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar(removing: .sidebarToggle)
+        }
+        .navigationSplitViewStyle(.prominentDetail)
+    }
+    
+    // MARK: - Search Bar
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.body)
+            
+            TextField("Search locally or press Enter for AI suggestions...", text: $searchText)
+                .textFieldStyle(.plain)
+                .onSubmit {
+                    if !searchText.isEmpty {
+                        Task {
+                            await symbolService.processText(searchText)
                         }
-                    } label: {
-                        Image(systemName: showingCategoryFilter ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                            .foregroundColor(.accentColor)
                     }
-                    .help("Toggle Categories")
+                }
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .font(.body)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+        .onChange(of: searchText) { _, newValue in
+            filterTask?.cancel()
+            filterTask = Task {
+                try? await Task.sleep(for: .milliseconds(150))
+                if !Task.isCancelled {
+                    await updateFilteredSymbols()
                 }
             }
         }
+        .onChange(of: selectedCategory) { _, _ in
+            filterTask?.cancel()
+            filterTask = Task {
+                await updateFilteredSymbols()
+            }
+        }
+        .onAppear {
+            Task {
+                await updateFilteredSymbols()
+            }
+        }
+    }
+    
+    // MARK: - Computed Column Count
+    private var columnCount: Int {
+        // Map slider 0.0-1.0 to 8-1 columns (inverted: small icons = more columns)
+        let maxColumns = 8
+        let minColumns = 1
+        return max(minColumns, maxColumns - Int(round(gridScale * Double(maxColumns - minColumns))))
+    }
+    
+    // Computed top padding based on actual toolbar height
+    private var topPadding: CGFloat {
+        // Base height calculation: search bar + control bar
+        // Search bar: ~52pt, Control bar: ~52pt, plus some buffer
+        return 116
     }
     
     // MARK: - Control Bar
@@ -120,29 +178,22 @@ public struct SymbolPickerView: View {
         HStack(spacing: 12) {
             Spacer()
             
-            Menu {
-                ForEach(SymbolGridSize.allCases) { size in
-                    Button {
-                        gridSize = size
-                    } label: {
-                        Label(size.displayName, systemImage: size.iconName)
-                    }
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: gridSize.iconName)
-                        .font(.caption)
-                    Text("Grid")
-                        .font(.caption)
-                    Image(systemName: "chevron.down")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+            // Grid size slider with icons
+            HStack(spacing: 8) {
+                Image(systemName: "square.grid.3x3")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Slider(value: $gridScale, in: 0...1)
+                    .frame(width: 120)
+                
+                Image(systemName: "square.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 8))
             
             Menu {
                 // Rendering Mode Section
@@ -222,26 +273,18 @@ public struct SymbolPickerView: View {
                     Label("Vegas Mode", systemImage: "sparkles")
                 }
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.caption)
-                    Text("View")
-                        .font(.caption)
-                    Image(systemName: "chevron.down")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                Image(systemName: "slider.horizontal.3")
+                    .font(.title3)
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
             
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(.regularMaterial)
     }
     
     // MARK: - Color Palette Data
@@ -268,39 +311,6 @@ public struct SymbolPickerView: View {
             ("Primary", .primary),
             ("Secondary", .secondary)
         ]
-    }
-    
-    // MARK: - Category Filter Bar
-    private var categoryFilterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(SFSymbolCategory.allCases, id: \.rawValue) { category in
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedCategory = category
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: category.systemImage)
-                                .font(.caption2)
-                            Text(category.displayName)
-                                .font(.caption)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(
-                            selectedCategory == category ? Color.accentColor : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 6)
-                        )
-                        .foregroundColor(selectedCategory == category ? .white : .primary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-        .padding(.vertical, 8)
-        .background(.regularMaterial)
     }
     
     // MARK: - Symbol Grid View
@@ -340,21 +350,18 @@ public struct SymbolPickerView: View {
                         
                         LazyVGrid(
                             columns: Array(
-                                repeating: GridItem(
-                                    .flexible(minimum: gridSize.buttonSize.min, maximum: gridSize.buttonSize.max),
-                                    spacing: 10
-                                ),
-                                count: gridSize.columnCount
+                                repeating: GridItem(.flexible(), spacing: 10),
+                                count: columnCount
                             ),
                             spacing: 10
                         ) {
                             ForEach(aiSuggestedSymbols) { suggestion in
-                                SymbolGridButton(
+                                IconCard(
                                     symbolName: suggestion.name,
                                     isSelected: selectedSymbol == suggestion.name,
                                     symbolColor: .purple,
                                     vegasMode: vegasMode,
-                                    gridSize: gridSize,
+                                    gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     justCopied: justCopiedSymbolName == suggestion.name
                                 ) {
@@ -413,21 +420,18 @@ public struct SymbolPickerView: View {
                         
                         LazyVGrid(
                             columns: Array(
-                                repeating: GridItem(
-                                    .flexible(minimum: gridSize.buttonSize.min, maximum: gridSize.buttonSize.max),
-                                    spacing: 10
-                                ),
-                                count: gridSize.columnCount
+                                repeating: GridItem(.flexible(), spacing: 10),
+                                count: columnCount
                             ),
                             spacing: 10
                         ) {
                             ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
-                                SymbolGridButton(
+                                IconCard(
                                     symbolName: symbolName,
                                     isSelected: selectedSymbol == symbolName,
                                     symbolColor: selectedColor,
                                     vegasMode: vegasMode,
-                                    gridSize: gridSize,
+                                    gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     justCopied: justCopiedSymbolName == symbolName
                                 ) {

@@ -14,13 +14,15 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols", from: "6.2.0")
+        .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols", from: "6.2.0"),
+        .package(path: "../LorenzoKit")
     ],
     targets: [
         .target(
             name: "SFBuddyKit",
             dependencies: [
-                .product(name: "SFSafeSymbols", package: "SFSafeSymbols")
+                .product(name: "SFSafeSymbols", package: "SFSafeSymbols"),
+                .product(name: "LorenzoKit", package: "LorenzoKit")
             ],
             path: "Sources/SFBuddyKit"
         ),
