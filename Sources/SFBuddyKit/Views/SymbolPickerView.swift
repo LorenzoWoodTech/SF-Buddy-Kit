@@ -39,6 +39,7 @@ public struct SymbolPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var symbolService = SFSymbolService.shared
     @Environment(VegasSettings.self) private var appSettings
+    @State private var packageSettings = SFSymbolPackageSettings.shared
     
     @State private var searchText = ""
     @State private var selectedCategory: SFSymbolCategory = .all
@@ -313,20 +314,20 @@ public struct SymbolPickerView: View {
             
             // Options Menu (ellipsis)
             Menu {
-                Button {
-                    withAnimation(.spring(duration: 0.3)) {
-                        showTitles.toggle()
-                    }
-                } label: {
-                    HStack {
-                        if showTitles {
-                            Image(systemName: "checkmark")
+                Section("Display") {
+                    Button {
+                        withAnimation(.spring(duration: 0.3)) {
+                            showTitles.toggle()
                         }
-                        Text("Show Names Below Icons")
+                    } label: {
+                        HStack {
+                            if showTitles {
+                                Image(systemName: "checkmark")
+                            }
+                            Text("Show Names Below Icons")
+                        }
                     }
-                }
-                
-                Section("Beta Features") {
+                    
                     Button {
                         withAnimation(.spring(duration: 0.3)) {
                             groupVariants.toggle()
@@ -343,37 +344,32 @@ public struct SymbolPickerView: View {
                 
                 Divider()
                 
-                Section("AI Model") {
-                    Picker("Model", selection: Binding(
-                        get: { 
-                            if SFSymbolPackageSettings.shared.modelProvider == .apple {
-                                return "apple"
-                            } else {
-                                return SFSymbolPackageSettings.shared.selectedModel.rawValue
-                            }
-                        },
-                        set: { newValue in
-                            if newValue == "apple" {
-                                SFSymbolPackageSettings.shared.modelProvider = .apple
-                            } else {
-                                SFSymbolPackageSettings.shared.modelProvider = .claude
-                                if let model = ClaudeModel(rawValue: newValue) {
-                                    SFSymbolPackageSettings.shared.selectedModel = model
+                Section("Model") {
+                    ForEach(SFSymbolService.ModelProvider.allCases) { provider in
+                        Button {
+                            packageSettings.modelProvider = provider
+                        } label: {
+                            HStack {
+                                if packageSettings.modelProvider == provider {
+                                    Image(systemName: "checkmark")
+                                }
+                                Label {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(provider.displayName)
+                                        Text(provider.description)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                } icon: {
+                                    if provider == .apple {
+                                        Image(systemName: "apple.logo")
+                                    } else {
+                                        Image(systemName: "cloud")
+                                    }
                                 }
                             }
                         }
-                    )) {
-                        Text("Foundation Model (Local)")
-                            .tag("apple")
-                        
-                        Divider()
-                        
-                        ForEach(ClaudeModel.allCases) { model in
-                            Text(model.displayName)
-                                .tag(model.rawValue)
-                        }
                     }
-                    .pickerStyle(.inline)
                 }
                 
                 Divider()
@@ -381,8 +377,16 @@ public struct SymbolPickerView: View {
                 Button {
                     showingSettings = true
                 } label: {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("Model Setup", systemImage: "gearshape")
                 }
+                
+                #if os(macOS)
+                Button {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    Label("Quit SF Buddy", systemImage: "power")
+                }
+                #endif
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.body)
@@ -486,7 +490,6 @@ public struct SymbolPickerView: View {
                                     onHover: { isHovering in
                                         if isHovering {
                                             hoveredSymbolName = suggestion.name
-                                            // Clear copied message when hovering
                                             justCopiedSymbolName = nil
                                         } else {
                                             hoveredSymbolName = nil
@@ -569,7 +572,6 @@ public struct SymbolPickerView: View {
                                     onHover: { isHovering in
                                         if isHovering {
                                             hoveredSymbolName = symbolName
-                                            // Clear copied message when hovering
                                             justCopiedSymbolName = nil
                                         } else {
                                             hoveredSymbolName = nil
