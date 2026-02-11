@@ -156,31 +156,18 @@ extension SymbolVariant {
             return iconName // Return original with .fill if it had it
         }
         
-        // Icons that are already complete shapes and shouldn't be wrapped
-        let completeShapeIcons = [
-            "clock", "bell", "flag", "tag", "bookmark", 
-            "heart", "star", "moon", "sun", "cloud",
-            "bolt", "flame", "drop", "snowflake",
-            "leaf", "antenna", "hourglass"
-        ]
-        
-        if completeShapeIcons.contains(baseIconName) {
-            return iconName // Use directly - clock, clock.fill, etc.
-        }
-        
-        // Common badge icons that should be wrapped in a shape
-        let simpleIcons = [
+        // Only wrap very basic/simple modifier icons in a shape
+        // Everything else should be used directly as-is
+        let simpleModifierIcons = [
             "plus", "minus", "multiply", "divide", "equal",
             "checkmark", "xmark", "questionmark", "exclamationmark",
-            "person", "location", "pin",
-            "arrow", "chevron", "link", "paperclip",
-            "number", "character", "letter", "gear", "gearshape"
+            "arrow", "chevron"
         ]
         
-        // Check if icon starts with any simple icon name
-        let needsShape = simpleIcons.contains { baseIconName.hasPrefix($0) || baseIconName == $0 }
+        // Check if icon is exactly one of the simple modifiers
+        let shouldWrap = simpleModifierIcons.contains(baseIconName)
         
-        if needsShape {
+        if shouldWrap {
             // Wrap with shape, preserving fill state
             if hasFillSuffix {
                 return "\(baseIconName).\(preferredShape).fill"
@@ -189,12 +176,8 @@ extension SymbolVariant {
             }
         }
         
-        // For other icons, wrap in shape with fill
-        if hasFillSuffix {
-            return "\(baseIconName).\(preferredShape).fill"
-        } else {
-            return "\(baseIconName).\(preferredShape)"
-        }
+        // Default: use icon as-is without wrapping (for gear, eye, mic, etc.)
+        return iconName
     }
     
     private static func extractBadgeDisplayName(from fullSymbol: String) -> String {
