@@ -106,91 +106,41 @@ enum SymbolRenderingStyle: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Grid Size Popover
-struct SymbolGridSizePopover: View {
+// MARK: - Grid Size Menu
+struct SymbolGridSizeMenu: View {
     @Binding var selectedGridSize: SymbolGridSize
-    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Grid Size")
-                .font(.caption)
-                .fontWeight(.medium)
-            
-            VStack(spacing: 4) {
-                ForEach(SymbolGridSize.allCases) { size in
-                    Button {
-                        selectedGridSize = size
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Image(systemName: size.iconName)
-                                .font(.caption)
-                            Text(size.displayName)
-                                .font(.caption)
-                            Spacer()
-                            if selectedGridSize == size {
-                                Image(systemName: "checkmark")
-                                    .font(.caption2)
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(selectedGridSize == size ? Color.accentColor.opacity(0.1) : Color.clear, 
-                                   in: RoundedRectangle(cornerRadius: 4))
-                    }
-                    .buttonStyle(.plain)
+        Menu {
+            ForEach(SymbolGridSize.allCases) { size in
+                Button {
+                    selectedGridSize = size
+                } label: {
+                    Label(size.displayName, systemImage: size.iconName)
                 }
             }
+        } label: {
+            Image(systemName: selectedGridSize.iconName)
         }
-        .padding(8)
-        .frame(minWidth: 140)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
-// MARK: - Rendering Mode Popover
-struct SymbolRenderingModePopover: View {
+// MARK: - Rendering Mode Menu
+struct SymbolRenderingModeMenu: View {
     @Binding var selectedRenderingMode: SymbolRenderingStyle
-    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Render Mode")
-                .font(.caption)
-                .fontWeight(.medium)
-            
-            VStack(spacing: 4) {
-                ForEach(SymbolRenderingStyle.allCases) { mode in
-                    Button {
-                        selectedRenderingMode = mode
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Image(systemName: mode.iconName)
-                                .font(.caption)
-                            Text(mode.displayName)
-                                .font(.caption)
-                            Spacer()
-                            if selectedRenderingMode == mode {
-                                Image(systemName: "checkmark")
-                                    .font(.caption2)
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(selectedRenderingMode == mode ? Color.accentColor.opacity(0.1) : Color.clear, 
-                                   in: RoundedRectangle(cornerRadius: 4))
-                    }
-                    .buttonStyle(.plain)
+        Menu {
+            ForEach(SymbolRenderingStyle.allCases) { mode in
+                Button {
+                    selectedRenderingMode = mode
+                } label: {
+                    Label(mode.displayName, systemImage: mode.iconName)
                 }
             }
+        } label: {
+            Image(systemName: selectedRenderingMode.iconName)
         }
-        .padding(8)
-        .frame(minWidth: 140)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
@@ -250,17 +200,17 @@ struct SymbolColorPickerPopover: View {
 }
 
 // MARK: - Previews
-#Preview("Grid Size Popover") {
+#Preview("Grid Size Menu") {
     @Previewable @State var gridSize: SymbolGridSize = .medium
     
-    SymbolGridSizePopover(selectedGridSize: $gridSize)
+    SymbolGridSizeMenu(selectedGridSize: $gridSize)
         .padding()
 }
 
-#Preview("Rendering Mode Popover") {
+#Preview("Rendering Mode Menu") {
     @Previewable @State var renderMode: SymbolRenderingStyle = .hierarchical
     
-    SymbolRenderingModePopover(selectedRenderingMode: $renderMode)
+    SymbolRenderingModeMenu(selectedRenderingMode: $renderMode)
         .padding()
 }
 
@@ -269,55 +219,4 @@ struct SymbolColorPickerPopover: View {
     
     SymbolColorPickerPopover(selectedColor: $color)
         .padding()
-}
-
-#Preview("Grid Sizes Demo") {
-    VStack(spacing: 20) {
-        ForEach(SymbolGridSize.allCases) { size in
-            VStack(alignment: .leading, spacing: 8) {
-                Text(size.displayName)
-                    .font(.headline)
-                
-                HStack {
-                    Image(systemName: size.iconName)
-                        .font(.system(size: size.symbolSize))
-                    
-                    Text("Columns: \(size.columnCount)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-        }
-    }
-    .padding()
-}
-
-#Preview("Rendering Modes Demo") {
-    VStack(spacing: 16) {
-        ForEach(SymbolRenderingStyle.allCases) { mode in
-            HStack {
-                Image(systemName: "sparkles")
-                    .font(.title)
-                    .symbolRenderingMode(mode.swiftUIMode)
-                    .foregroundStyle(.blue, .green, .purple)
-                
-                VStack(alignment: .leading) {
-                    Text(mode.displayName)
-                        .font(.headline)
-                    
-                    Image(systemName: mode.iconName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-        }
-    }
-    .padding()
 }
