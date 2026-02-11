@@ -77,6 +77,7 @@ enum BadgeType: String, CaseIterable {
     case badgeQuestionmark = ".badge.questionmark"
     case badgeExclamationmark = ".badge.exclamationmark"
     case trianglebadgeExclamationmark = ".trianglebadge.exclamationmark"
+    case badgeGearshape = ".badge.gearshape"
     
     var suffix: String { rawValue }
     
@@ -91,6 +92,7 @@ enum BadgeType: String, CaseIterable {
         case .badgeQuestionmark: return "?"
         case .badgeExclamationmark: return "!"
         case .trianglebadgeExclamationmark: return "⚠️"
+        case .badgeGearshape: return "Gear"
         }
     }
     
@@ -105,6 +107,7 @@ enum BadgeType: String, CaseIterable {
         case .badgeQuestionmark: return "questionmark"
         case .badgeExclamationmark: return "exclamationmark"
         case .trianglebadgeExclamationmark: return "exclamationmark.triangle.fill"
+        case .badgeGearshape: return "gearshape"
         }
     }
 }

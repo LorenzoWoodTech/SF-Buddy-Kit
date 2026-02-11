@@ -87,7 +87,7 @@ struct IconCard: View {
                             }
                         }
                     
-                    // Variant indicators (always visible)
+                    // Variant indicators (always visible, but skip base variant)
                     if hasVariants {
                         variantIndicators(in: geometry.size)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -182,9 +182,10 @@ struct IconCard: View {
     private func variantIndicators(in size: CGSize) -> some View {
         ZStack {
             ForEach(Array(availableVariants.enumerated()), id: \.element.id) { index, variant in
-                if let badgeIcon = variant.badgeIcon {
+                // Skip base variant - it doesn't need an indicator
+                if variant.variantType != .base, let badgeIcon = variant.badgeIcon {
                     let alignment = cornerAlignment(for: index, variant: variant)
-                    let hitTestSize: CGFloat = 32
+                    let hitTestSize: CGFloat = 44 // Increased from 32
                     
                     Image(systemName: badgeIcon)
                         .font(.system(size: indicatorSize))
@@ -192,11 +193,16 @@ struct IconCard: View {
                         .scaleEffect(index == currentVariantIndex ? 1.3 : 1.0)
                         .animation(.spring(duration: 0.2), value: currentVariantIndex)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-                        .padding(8)
+                        .padding(10)
                         .contentShape(Rectangle().size(width: hitTestSize, height: hitTestSize))
                         .onTapGesture {
                             withAnimation(.spring(duration: 0.2)) {
-                                currentVariantIndex = index
+                                // If tapping the active variant, deselect it (return to base)
+                                if index == currentVariantIndex {
+                                    currentVariantIndex = 0
+                                } else {
+                                    currentVariantIndex = index
+                                }
                             }
                             pressStartedOnIndicator = true
                             
@@ -245,18 +251,18 @@ struct IconCard: View {
     }
     
     private var indicatorSize: CGFloat {
-        return 10 + (gridScale * 4)
+        return 11 + (gridScale * 5) // Slightly larger
     }
     
     private func cornerAlignment(for index: Int, variant: SymbolVariant) -> Alignment {
         // Organize by variant type:
-        // - Base: top-left
+        // - Base: not shown (no indicator)
         // - Fill: bottom-left
         // - Badges: right side (top-right, bottom-right, then wrap)
         
         switch variant.variantType {
         case .base:
-            return .topLeading
+            return .topLeading // Won't be shown anyway
         case .fill:
             return .bottomLeading
         case .badge:
@@ -272,10 +278,13 @@ struct IconCard: View {
     }
     
     private func findIndicatorAt(location: CGPoint, in size: CGSize) -> Int? {
-        let indicatorHitSize: CGFloat = 32
-        let padding: CGFloat = 8
+        let indicatorHitSize: CGFloat = 44
+        let padding: CGFloat = 10
         
         for (index, variant) in availableVariants.enumerated() {
+            // Skip base variant
+            guard variant.variantType != .base else { continue }
+            
             let alignment = cornerAlignment(for: index, variant: variant)
             
             var indicatorRect: CGRect
