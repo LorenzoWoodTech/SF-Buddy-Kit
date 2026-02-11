@@ -17,7 +17,7 @@ struct SFSymbolBrowserView: View {
     @Binding var selectedSymbol: String?
     @Environment(\.dismiss) private var dismiss
     
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @State private var searchText = ""
     @State private var selectedCategory: SFSymbolCategory = .all
     @State private var selectedColor: Color = .primary
@@ -187,11 +187,11 @@ struct SFSymbolBrowserView: View {
                 Divider()
                 
                 Button("Trigger Chaos") {
-                    appSettings.triggerVegasChaos()
+                    VegasSettings.shared.triggerVegasChaos()
                 }
                 
                 Button("Randomize Settings") {
-                    appSettings.randomizeVegas()
+                    VegasSettings.shared.randomizeVegas()
                 }
                 
                 Divider()
@@ -334,7 +334,7 @@ struct SFSymbolBrowserView: View {
     
     // MARK: - Enhanced Filtered Symbols with Category Support
     private var filteredSymbols: [String] {
-        let allSymbols = SFSymbol.allCases.map { $0.rawValue }
+        let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
         var symbols = allSymbols
         
         // Apply category filter with enhanced categorization
@@ -457,7 +457,7 @@ struct BrowserSymbolGridButton: View {
     let renderingMode: BrowserRenderingMode
     let action: () -> Void
     
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @State private var isHovered = false
     @State private var animationOffset: CGFloat = 0
     @State private var animationRotation: Double = 0
@@ -476,8 +476,7 @@ struct BrowserSymbolGridButton: View {
                     .scaleEffect(vegasMode ? animationScale : 1)
                     .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
                     .offset(x: vegasMode ? animationOffset : 0)
-                    .symbolEffect(.bounce, isActive: vegasMode)
-                    .symbolEffect(.pulse, isActive: vegasMode)
+                    .modifier(BrowserVegasSymbolEffects(isActive: vegasMode))
                 
                 if gridSize.showNames {
                     Text(symbolName)
@@ -597,6 +596,21 @@ struct BrowserSymbolGridButton: View {
             animationRotation = 0
             animationOffset = 0
             randomColor = symbolColor
+        }
+    }
+}
+
+// MARK: - Browser Vegas Symbol Effects Modifier
+private struct BrowserVegasSymbolEffects: ViewModifier {
+    let isActive: Bool
+    
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, iOS 18.0, *) {
+            content
+                .symbolEffect(.bounce, isActive: isActive)
+                .symbolEffect(.pulse, isActive: isActive)
+        } else {
+            content
         }
     }
 }
@@ -833,7 +847,7 @@ private struct BrowserColorPickerPopover: View {
 
 // MARK: - Complete Vegas Settings Popover (EXACTLY from SymbolPickerView)
 struct BrowserVegasSettingsPopover: View {
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -928,7 +942,7 @@ struct BrowserVegasSettingsPopover: View {
             
             HStack {
                 Button("Randomize") {
-                    appSettings.randomizeVegas()
+                    VegasSettings.shared.randomizeVegas()
                 }
                 .font(.caption)
                 
@@ -1027,5 +1041,5 @@ extension String {
 
 #Preview {
     SFSymbolBrowserView(selectedSymbol: .constant(nil))
-        .environment(AppSettings.shared)
+        .environment(VegasSettings.shared)
 }

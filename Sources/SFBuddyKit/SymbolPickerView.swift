@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SymbolPickerView: View {
     @StateObject private var symbolService = SFSymbolService.shared
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @State private var selectedColor: Color = .primary
     @State private var showingStylePopover = false
     @State private var showingColorPopover = false
@@ -17,165 +17,249 @@ struct SymbolPickerView: View {
     @State private var showingVegasSettingsPopover = false
     @State private var vegasMode = false
     @State private var gridSize: GridSize = .medium
+    @State private var searchText = ""
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    Spacer()
-                    
-                    Button {
-                        showingGridSizePopover.toggle()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: gridSize.gridIconName)
-                                .font(.caption)
-                            Text("Grid")
-                                .font(.caption)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            // Search bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Search symbols or describe what you need...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .onSubmit {
+                        Task {
+                            await symbolService.processText(searchText)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    }
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .popover(isPresented: $showingGridSizePopover) {
-                        GridSizePopover(selectedGridSize: $gridSize)
-                    }
-                    
-                    Button {
-                        showingStylePopover.toggle()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "circle.grid.2x2")
-                                .font(.caption)
-                            Text("Render")
-                                .font(.caption)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $showingStylePopover) {
-                        RenderingModePopover(
-                            selectedRenderingMode: $symbolService.currentRenderingMode
-                        )
-                    }
-                    
-                    Button {
-                        showingColorPopover.toggle()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(selectedColor)
-                                .frame(width: 14, height: 14)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(.primary.opacity(0.3), lineWidth: 0.5)
-                                )
-                            Text("Colors")
-                                .font(.caption)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $showingColorPopover) {
-                        ColorPickerPopover(
-                            selectedColor: $selectedColor
-                        )
-                    }
-                    
-                    Button {
-                        withAnimation(.bouncy) {
-                            vegasMode.toggle()
-                        }
-                    } label: {
-                        Image(systemName: vegasMode ? "sparkles" : "sparkles")
-                            .font(.caption)
-                            .foregroundColor(vegasMode ? .yellow : .secondary)
+                }
+            }
+            .padding(8)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal)
+            .padding(.top, 12)
+            
+            ScrollView {
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Spacer()
+                        
+                        Button {
+                            showingGridSizePopover.toggle()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: gridSize.gridIconName)
+                                    .font(.caption)
+                                Text("Grid")
+                                    .font(.caption)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(vegasMode ? Color.yellow.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        Button("Trigger Chaos") {
-                            appSettings.triggerVegasChaos()
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showingGridSizePopover) {
+                            GridSizePopover(selectedGridSize: $gridSize)
                         }
                         
-                        Button("Randomize Settings") {
-                            appSettings.randomizeVegas()
+                        Button {
+                            showingStylePopover.toggle()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "circle.grid.2x2")
+                                    .font(.caption)
+                                Text("Render")
+                                    .font(.caption)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showingStylePopover) {
+                            RenderingModePopover(
+                                selectedRenderingMode: $symbolService.currentRenderingMode
+                            )
                         }
                         
-                        Divider()
+                        Button {
+                            showingColorPopover.toggle()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(selectedColor)
+                                    .frame(width: 14, height: 14)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(.primary.opacity(0.3), lineWidth: 0.5)
+                                    )
+                                Text("Colors")
+                                    .font(.caption)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showingColorPopover) {
+                            ColorPickerPopover(
+                                selectedColor: $selectedColor
+                            )
+                        }
                         
-                        Button(vegasMode ? "Disable Vegas Mode" : "Enable Vegas Mode") {
+                        Button {
                             withAnimation(.bouncy) {
                                 vegasMode.toggle()
                             }
-                        }
-                    }
-                    .popover(isPresented: $showingVegasSettingsPopover) {
-                        VegasSettingsPopover()
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
-
-                if !symbolService.suggestedSymbols.isEmpty {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: gridSize.buttonSize.min, maximum: gridSize.buttonSize.max), spacing: 10), count: gridSize.columnCount), spacing: 10) {
-                        ForEach(symbolService.suggestedSymbols) { suggestion in
-                            SymbolButton(suggestion: suggestion, symbolColor: selectedColor, vegasMode: vegasMode, gridSize: gridSize)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                } else if symbolService.suggestedSymbols.isEmpty && !symbolService.invalidSymbolNamesFromClaude.isEmpty {
-                    Text("All suggested symbols appear to be invalid or non-existent.")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                        .padding()
-                } else if symbolService.suggestedSymbols.isEmpty && symbolService.apiKeyMissingOrInvalid && !symbolService.lastProcessedText.isEmpty {
-                }
-
-                if !symbolService.invalidSymbolNamesFromClaude.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text("Model suggested \(symbolService.invalidSymbolNamesFromClaude.count) invalid symbol name(s):")
+                        } label: {
+                            Image(systemName: vegasMode ? "sparkles" : "sparkles")
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(vegasMode ? .yellow : .secondary)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(vegasMode ? Color.yellow.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
                         }
-                        Text(symbolService.invalidSymbolNamesFromClaude.joined(separator: ", "))
-                            .font(.caption2)
-                            .foregroundColor(.gray)
-                            .lineLimit(3)
-                            .padding(.leading, 20)
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button("Trigger Chaos") {
+                                VegasSettings.shared.triggerVegasChaos()
+                            }
+                            
+                            Button("Randomize Settings") {
+                                VegasSettings.shared.randomizeVegas()
+                            }
+                            
+                            Divider()
+                            
+                            Button(vegasMode ? "Disable Vegas Mode" : "Enable Vegas Mode") {
+                                withAnimation(.bouncy) {
+                                    vegasMode.toggle()
+                                }
+                            }
+                        }
+                        .popover(isPresented: $showingVegasSettingsPopover) {
+                            VegasSettingsPopover()
+                        }
+                        
+                        Spacer()
                     }
                     .padding(.horizontal)
-                    .padding(.top, 4)
-                }
 
+                    if !displaySymbols.isEmpty {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: gridSize.buttonSize.min, maximum: gridSize.buttonSize.max), spacing: 10), count: gridSize.columnCount), spacing: 10) {
+                            ForEach(displaySymbols) { suggestion in
+                                SymbolButton(suggestion: suggestion, symbolColor: selectedColor, vegasMode: vegasMode, gridSize: gridSize)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    } else if searchText.isEmpty && symbolService.suggestedSymbols.isEmpty {
+                        // Empty state with suggestions
+                        VStack(spacing: 20) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 48))
+                                .foregroundColor(.secondary)
+                                .modifier(VegasSymbolEffects(isActive: vegasMode))
+                            
+                            VStack(spacing: 8) {
+                                Text("Search for Symbols")
+                                    .font(.headline)
+                                Text("Describe what you need or search by name")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Try searching:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                ForEach(["home", "settings", "heart", "star"], id: \.self) { example in
+                                    Button {
+                                        searchText = example
+                                        Task {
+                                            await symbolService.processText(example)
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "magnifyingglass")
+                                                .font(.caption2)
+                                            Text(example)
+                                                .font(.caption)
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .padding(.top, 60)
+                    } else if symbolService.suggestedSymbols.isEmpty && !symbolService.invalidSymbolNamesFromClaude.isEmpty {
+                        Text("All suggested symbols appear to be invalid or non-existent.")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                            .padding()
+                    } else if symbolService.isProcessing {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                            Text("Finding symbols...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 60)
+                    }
+
+                    if !symbolService.invalidSymbolNamesFromClaude.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("Model suggested \(symbolService.invalidSymbolNamesFromClaude.count) invalid symbol name(s):")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                            Text(symbolService.invalidSymbolNamesFromClaude.joined(separator: ", "))
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                                .lineLimit(3)
+                                .padding(.leading, 20)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+                    }
+
+                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
         }
+    }
+    
+    // Computed property to get symbols to display
+    private var displaySymbols: [SFSymbolSuggestion] {
+        symbolService.suggestedSymbols
     }
 }
 
 // MARK: - Supporting Views and Components
-// (Moving all the supporting views from ContentView here)
 
 enum GridSize: String, CaseIterable, Identifiable {
     case small = "small"
@@ -382,7 +466,7 @@ struct SymbolButton: View {
     let vegasMode: Bool
     let gridSize: GridSize
     @StateObject private var symbolService = SFSymbolService.shared
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @State private var isHovered = false
     @State private var justCopied = false
     @State private var animationOffset: CGFloat = 0
@@ -409,8 +493,7 @@ struct SymbolButton: View {
                     .scaleEffect(vegasMode ? animationScale : 1)
                     .rotationEffect(.degrees(vegasMode ? animationRotation : 0))
                     .offset(x: vegasMode ? animationOffset : 0)
-                    .symbolEffect(.bounce, isActive: vegasMode)
-                    .symbolEffect(.pulse, isActive: vegasMode)
+                    .modifier(VegasSymbolEffects(isActive: vegasMode))
 
                 if gridSize.showNames {
                     Text(suggestion.name)
@@ -452,11 +535,6 @@ struct SymbolButton: View {
                         withAnimation {
                             justCopied = false
                         }
-                        #if os(macOS)
-                        if let delegate = NSApplication.shared.delegate as? AppDelegate {
-                            delegate.popover?.performClose(nil)
-                        }
-                        #endif
                     }
                 }
             }
@@ -573,9 +651,34 @@ struct SymbolButton: View {
     }
 }
 
-// MARK: - Complete Vegas Settings Popover (EXACTLY from SymbolPickerView)
+// MARK: - Vegas Symbol Effects Modifier
+@available(macOS 15.0, iOS 18.0, *)
+private struct VegasSymbolEffectsModifier: ViewModifier {
+    let isActive: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .symbolEffect(.bounce, isActive: isActive)
+            .symbolEffect(.pulse, isActive: isActive)
+    }
+}
+
+private struct VegasSymbolEffects: ViewModifier {
+    let isActive: Bool
+    
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, iOS 18.0, *) {
+            content
+                .symbolEffect(.bounce, isActive: isActive)
+                .symbolEffect(.pulse, isActive: isActive)
+        } else {
+            content
+        }
+    }
+}
+
 struct VegasSettingsPopover: View {
-    @Environment(AppSettings.self) private var appSettings
+    @Environment(VegasSettings.self) private var appSettings
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -670,7 +773,7 @@ struct VegasSettingsPopover: View {
             
             HStack {
                 Button("Randomize") {
-                    appSettings.randomizeVegas()
+                    VegasSettings.shared.randomizeVegas()
                 }
                 .font(.caption)
                 
@@ -691,6 +794,5 @@ struct VegasSettingsPopover: View {
 
 #Preview {
     SymbolPickerView()
-        .environmentObject(SFSymbolService.shared)
-        .environment(AppSettings.shared)
+        .environment(VegasSettings.shared)
 }

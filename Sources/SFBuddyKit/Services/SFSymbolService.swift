@@ -264,8 +264,8 @@ class SFSymbolService: ObservableObject {
             throw APIError.invalidURL
         }
         
-        let selectedModel = AppSettings.shared.selectedModel
-        let symbolCount = AppSettings.shared.symbolCount
+        let selectedModel = SFSymbolPackageSettings.shared.selectedModel
+        let symbolCount = SFSymbolPackageSettings.shared.symbolCount
         
         let prompt = """
         Given this text: "\(text)"
