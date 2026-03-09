@@ -21,30 +21,9 @@ import FoundationModels
 public class SFSymbolService: ObservableObject {
     public static let shared = SFSymbolService()
     private static let userDefaultsAPIKey = "ClaudeAPIKey"
-    
-    // MARK: - Model Provider Configuration
-    
-    public enum ModelProvider: String, CaseIterable, Identifiable {
-        case apple = "apple"
-        case claude = "claude"
-        
-        public var id: String { rawValue }
-        
-        public var displayName: String {
-            switch self {
-            case .apple: return "Apple Intelligence"
-            case .claude: return "Claude API"
-            }
-        }
-        
-        public var description: String {
-            switch self {
-            case .apple: return "On-device, private, requires iOS 26+"
-            case .claude: return "Cloud-based, requires API key"
-            }
-        }
-    }
-    
+
+    // MARK: - Error Handling
+
     public enum AIServiceError: Equatable {
         case none
         case claudeAPIKeyMissing
@@ -95,6 +74,13 @@ public class SFSymbolService: ObservableObject {
     
     @Published public var currentError: AIServiceError = .none
     
+    @Published public var useTwoStageExpansion: Bool {
+        didSet {
+            UserDefaults.standard.set(useTwoStageExpansion, forKey: "SFSymbolService_UseTwoStageExpansion")
+            print("[SFSymbolService] Two-stage expansion \(useTwoStageExpansion ? "enabled" : "disabled")")
+        }
+    }
+    
     @Published public var claudeAPIKey: String {
         didSet {
             UserDefaults.standard.set(claudeAPIKey, forKey: SFSymbolService.userDefaultsAPIKey)
@@ -144,8 +130,10 @@ public class SFSymbolService: ObservableObject {
 
     private init() {
         self.claudeAPIKey = UserDefaults.standard.string(forKey: SFSymbolService.userDefaultsAPIKey) ?? ""
+        self.useTwoStageExpansion = UserDefaults.standard.object(forKey: "SFSymbolService_UseTwoStageExpansion") as? Bool ?? true
         print("[SFSymbolService] Initialized. Loaded API Key: \(self.claudeAPIKey.isEmpty ? "Not Set" : "Set")")
         print("[SFSymbolService] Symbol library: \(Self.allSymbolNames.count) symbols available for validation")
+        print("[SFSymbolService] Two-stage expansion: \(self.useTwoStageExpansion ? "enabled" : "disabled")")
         if self.claudeAPIKey.isEmpty {
             self.apiKeyMissingOrInvalid = true
         }
@@ -302,6 +290,48 @@ public class SFSymbolService: ObservableObject {
         
         let provider = SFSymbolPackageSettings.shared.modelProvider
         
+        if useTwoStageExpansion {
+            await getTwoStageSuggestions(for: text, provider: provider)
+        } else {
+            await getDirectSuggestions(for: text, provider: provider)
+        }
+    }
+    
+    /// Two-stage synonym expansion system
+    private func getTwoStageSuggestions(for text: String, provider: ModelProvider) async {
+        print("[SFSymbolService] Starting two-stage expansion for: '\(text)'")
+        
+        // Stage 1: Synonym Expansion
+        let expansionResult = await expandSynonyms(for: text, provider: provider)
+        
+        print("[SFSymbolService] Stage 1 complete: \(expansionResult.synonyms.count) synonyms, \(expansionResult.directRenderableSymbols.count) direct renders")
+        
+        // Stage 2: Symbol Mapping from all concepts
+        let mappingResult = await mapConceptsToSymbols(concepts: expansionResult.allTerms, provider: provider)
+        
+        print("[SFSymbolService] Stage 2 complete: \(mappingResult.validSymbols.count) symbols mapped")
+        
+        // Combine results: direct renderable symbols + mapped symbols
+        var combinedSuggestions = mappingResult.validSymbols
+        
+        // Add direct renderable symbols that aren't already in the mapped results
+        let mappedNames = Set(mappingResult.validSymbols.map { $0.name })
+        for directSymbol in expansionResult.directRenderableSymbols {
+            if !mappedNames.contains(directSymbol) {
+                combinedSuggestions.append(SFSymbolSuggestion(name: directSymbol))
+            }
+        }
+        
+        suggestedSymbols = combinedSuggestions
+        invalidSymbolNamesFromClaude = mappingResult.invalidSymbolNames
+        
+        print("[SFSymbolService] Two-stage expansion complete: \(suggestedSymbols.count) total symbols")
+    }
+    
+    /// Original direct suggestion system (fallback/alternative)
+    private func getDirectSuggestions(for text: String, provider: ModelProvider) async {
+        print("[SFSymbolService] Using direct suggestion mode")
+        
         if provider == .apple {
             if #available(macOS 26.0, iOS 26.0, *) {
                 await getAppleIntelligenceSuggestions(for: text)
@@ -312,6 +342,89 @@ public class SFSymbolService: ObservableObject {
         } else {
             await getClaudeSuggestions(for: text)
         }
+    }
+    
+    /// Stage 1: Expand search term into synonyms and validate direct renders
+    private func expandSynonyms(for text: String, provider: ModelProvider) async -> SynonymExpansionResult {
+        print("[SFSymbolService] Stage 1: Expanding synonyms for '\(text)'")
+        
+        let synonyms: [String]
+        
+        if provider == .apple {
+            if #available(macOS 26.0, iOS 26.0, *) {
+                synonyms = await getAppleIntelligenceSynonyms(for: text)
+            } else {
+                synonyms = await getClaudeSynonyms(for: text)
+            }
+        } else {
+            synonyms = await getClaudeSynonyms(for: text)
+        }
+        
+        // Try to render each synonym directly as an SF Symbol
+        var directRenderableSymbols: [String] = []
+        
+        for synonym in synonyms {
+            let normalized = synonym
+                .lowercased()
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: " ", with: "")
+            
+            if Self.symbolSet.contains(normalized) {
+                directRenderableSymbols.append(normalized)
+                print("[SFSymbolService] ✓ Direct render: \(normalized)")
+            }
+        }
+        
+        return SynonymExpansionResult(
+            originalTerm: text,
+            synonyms: synonyms,
+            directRenderableSymbols: directRenderableSymbols
+        )
+    }
+    
+    /// Stage 2: Map concepts to SF Symbol names
+    private func mapConceptsToSymbols(concepts: [String], provider: ModelProvider) async -> SymbolMappingResult {
+        print("[SFSymbolService] Stage 2: Mapping \(concepts.count) concepts to symbols")
+        
+        let symbolNames: [String]
+        
+        if provider == .apple {
+            if #available(macOS 26.0, iOS 26.0, *) {
+                symbolNames = await getAppleIntelligenceSymbolsForConcepts(concepts: concepts)
+            } else {
+                symbolNames = await getClaudeSymbolsForConcepts(concepts: concepts)
+            }
+        } else {
+            symbolNames = await getClaudeSymbolsForConcepts(concepts: concepts)
+        }
+        
+        // Validate symbols
+        var validSuggestions: [SFSymbolSuggestion] = []
+        var invalidNames: [String] = []
+        
+        let symbolCount = SFSymbolPackageSettings.shared.symbolCount
+        
+        for name in symbolNames {
+            let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmedName.isEmpty { continue }
+            
+            if Self.symbolSet.contains(trimmedName) {
+                validSuggestions.append(SFSymbolSuggestion(name: trimmedName))
+                print("[SFSymbolService] ✓ Valid: \(trimmedName)")
+            } else {
+                print("[SFSymbolService] ✗ Invalid: \(trimmedName)")
+                invalidNames.append(trimmedName)
+            }
+            
+            if validSuggestions.count >= symbolCount {
+                break
+            }
+        }
+        
+        return SymbolMappingResult(
+            validSymbols: validSuggestions,
+            invalidSymbolNames: invalidNames
+        )
     }
     
     @available(macOS 26.0, iOS 26.0, *)
@@ -535,6 +648,250 @@ public class SFSymbolService: ObservableObject {
         return symbolNames
     }
     
+    // MARK: - Two-Stage Expansion Helper Methods
+
+    /// Stage 1: Get synonyms using Claude API
+    private func getClaudeSynonyms(for text: String) async -> [String] {
+        print("[SFSymbolService] Getting Claude synonyms for: '\(text)'")
+
+        guard !claudeAPIKey.isEmpty else {
+            print("[SFSymbolService] Claude API Key missing")
+            return []
+        }
+
+        guard let url = URL(string: claudeURL) else {
+            print("[SFSymbolService] Invalid Claude URL")
+            return []
+        }
+
+        let selectedModel = SFSymbolPackageSettings.shared.selectedModel
+
+        let systemPrompt = """
+        You are an expert at finding synonyms, related concepts, and semantic variations.
+        Return comprehensive lists of related words and concepts that could represent the same or similar ideas.
+        """
+
+        let userPrompt = """
+        Return a list of all synonyms and words that represent or depict the following concept:
+        "\(text)"
+
+        Include:
+        - Direct synonyms
+        - Related concepts
+        - Visual representations
+        - Metaphors and symbolic associations
+        - Common variations
+
+        Return ONLY the words, comma-separated, no explanations.
+        Aim for 15-25 related terms.
+        """
+
+        let requestBody: [String: Any] = [
+            "model": selectedModel.rawValue,
+            "max_tokens": 300,
+            "system": systemPrompt,
+            "messages": [["role": "user", "content": userPrompt]]
+        ]
+
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(self.claudeAPIKey, forHTTPHeaderField: "x-api-key")
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("[SFSymbolService] Claude synonym request failed")
+                return []
+            }
+
+            let result = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+            guard let firstContent = result.content.first, firstContent.type == "text" else {
+                print("[SFSymbolService] No text content in Claude response")
+                return []
+            }
+
+            let synonyms = firstContent.text
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+
+            print("[SFSymbolService] Claude returned \(synonyms.count) synonyms")
+            return synonyms
+
+        } catch {
+            print("[SFSymbolService] Error getting Claude synonyms: \(error)")
+            return []
+        }
+    }
+
+    /// Stage 1: Get synonyms using Apple Intelligence
+    @available(macOS 26.0, iOS 26.0, *)
+    private func getAppleIntelligenceSynonyms(for text: String) async -> [String] {
+        print("[SFSymbolService] Getting Apple Intelligence synonyms for: '\(text)'")
+
+        #if canImport(FoundationModels)
+        let availability = SystemLanguageModel.default.availability
+        guard availability == .available else {
+            print("[SFSymbolService] Apple Intelligence not available, falling back to empty list")
+            return []
+        }
+
+        do {
+            let prompt = """
+            Return a list of all synonyms and words that represent or depict the following concept:
+            "\(text)"
+
+            Include:
+            - Direct synonyms
+            - Related concepts
+            - Visual representations
+            - Metaphors and symbolic associations
+            - Common variations
+
+            Aim for 15-25 related terms.
+            """
+
+            let session = LanguageModelSession()
+            let response = try await session.respond(to: prompt, generating: SynonymExpansionResponse.self)
+
+            print("[SFSymbolService] Apple Intelligence returned \(response.content.synonyms.count) synonyms")
+            return response.content.synonyms
+
+        } catch {
+            print("[SFSymbolService] Error getting Apple Intelligence synonyms: \(error)")
+            return []
+        }
+        #else
+        return []
+        #endif
+    }
+
+    /// Stage 2: Map concepts to SF Symbol names using Claude API
+    private func getClaudeSymbolsForConcepts(concepts: [String]) async -> [String] {
+        print("[SFSymbolService] Getting Claude symbols for \(concepts.count) concepts")
+
+        guard !claudeAPIKey.isEmpty else {
+            print("[SFSymbolService] Claude API Key missing")
+            return []
+        }
+
+        guard let url = URL(string: claudeURL) else {
+            print("[SFSymbolService] Invalid Claude URL")
+            return []
+        }
+
+        let selectedModel = SFSymbolPackageSettings.shared.selectedModel
+        let symbolCount = SFSymbolPackageSettings.shared.symbolCount
+        let requestCount = symbolCount * 3
+
+        let conceptsList = concepts.joined(separator: ", ")
+
+        let systemPrompt = Self.sfSymbolsExpertPrompt
+
+        let userPrompt = """
+        Given these related concepts and terms:
+        \(conceptsList)
+
+        Return \(requestCount) SF Symbol names that could visually represent these concepts.
+        Follow SF Symbols naming conventions strictly.
+        Rank by semantic relevance (best matches first).
+        Return ONLY symbol names, comma-separated, no explanations.
+
+        Examples of well-formed symbols:
+        house.fill, person.circle, arrow.up.right, music.note, gear, star.fill, bell.badge
+        """
+
+        let requestBody: [String: Any] = [
+            "model": selectedModel.rawValue,
+            "max_tokens": 400,
+            "system": systemPrompt,
+            "messages": [["role": "user", "content": userPrompt]]
+        ]
+
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(self.claudeAPIKey, forHTTPHeaderField: "x-api-key")
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("[SFSymbolService] Claude symbol mapping request failed")
+                return []
+            }
+
+            let result = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+            guard let firstContent = result.content.first, firstContent.type == "text" else {
+                print("[SFSymbolService] No text content in Claude response")
+                return []
+            }
+
+            let symbolNames = firstContent.text
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+
+            print("[SFSymbolService] Claude returned \(symbolNames.count) symbol names from concepts")
+            return symbolNames
+
+        } catch {
+            print("[SFSymbolService] Error getting Claude symbols for concepts: \(error)")
+            return []
+        }
+    }
+
+    /// Stage 2: Map concepts to SF Symbol names using Apple Intelligence
+    @available(macOS 26.0, iOS 26.0, *)
+    private func getAppleIntelligenceSymbolsForConcepts(concepts: [String]) async -> [String] {
+        print("[SFSymbolService] Getting Apple Intelligence symbols for \(concepts.count) concepts")
+
+        #if canImport(FoundationModels)
+        let availability = SystemLanguageModel.default.availability
+        guard availability == .available else {
+            print("[SFSymbolService] Apple Intelligence not available, falling back to empty list")
+            return []
+        }
+
+        do {
+            let symbolCount = SFSymbolPackageSettings.shared.symbolCount
+            let requestCount = symbolCount * 3
+            let conceptsList = concepts.joined(separator: ", ")
+
+            let prompt = """
+            \(Self.sfSymbolsExpertPrompt)
+
+            Given these related concepts and terms:
+            \(conceptsList)
+
+            Return \(requestCount) SF Symbol names that could visually represent these concepts.
+            Follow SF Symbols naming conventions strictly.
+            Rank by semantic relevance (best matches first).
+            """
+
+            let session = LanguageModelSession()
+            let response = try await session.respond(to: prompt, generating: MultiConceptSymbolResponse.self)
+
+            print("[SFSymbolService] Apple Intelligence returned \(response.content.symbols.count) symbols from concepts")
+            return response.content.symbols
+
+        } catch {
+            print("[SFSymbolService] Error getting Apple Intelligence symbols for concepts: \(error)")
+            return []
+        }
+        #else
+        return []
+        #endif
+    }
+
+    // MARK: - Helper Methods
+
     public func replaceTextWithSymbol(_ symbolName: String) {
         #if os(macOS)
         let pasteboard = NSPasteboard.general
@@ -544,7 +901,7 @@ public class SFSymbolService: ObservableObject {
         UIPasteboard.general.string = symbolName
         #endif
     }
-    
+
     public func trackSymbolAction(symbolName: String, action: SymbolAction, searchTerm: String) {
         trackSymbolActionCallback?(symbolName, action, searchTerm)
     }

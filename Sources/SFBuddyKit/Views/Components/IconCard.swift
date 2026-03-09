@@ -2,12 +2,14 @@
 //  IconCard.swift
 //  SFBuddyKit
 //
-//  SF Symbol card with tap-to-switch variant functionality
+//  SF Symbol card with native platform gestures and optimized performance
 //
 
 import SwiftUI
 #if os(macOS)
 import AppKit
+#elseif os(iOS)
+import UIKit
 #endif
 
 struct IconCard: View {
@@ -32,32 +34,34 @@ struct IconCard: View {
     @State private var randomColor: Color = .primary
     @State private var vegasTimer: Timer?
     @State private var showCopyFeedback = false
-    @State private var isDraggingOnIndicator = false
     @State private var pressStartedOnIndicator = false
     @State private var isOptionKeyPressed = false
     @State private var hoveredIndicatorIndex: Int?
+    
+    // Gesture state
+    @State private var swipeOffset: CGFloat = 0
+    @State private var lastScrollTime: Date = .distantPast
+    @State private var accumulatedDelta: CGFloat = 0
+    
+    #if os(iOS)
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
+    #endif
     
     private var hasVariants: Bool {
         !availableVariants.isEmpty
     }
     
-    private var fillVariantIndex: Int? {
-        availableVariants.firstIndex { $0.variantType == .fill }
-    }
-    
     private var displayVariant: SymbolVariant {
-        // Get the current base variant (could be base or a badge)
         let baseVariant = hasVariants && currentVariantIndex < availableVariants.count 
             ? availableVariants[currentVariantIndex] 
             : SymbolVariant.base(symbolName)
         
-        // If Option key is held, try to show filled version of current variant
         if isOptionKeyPressed {
             let fillSymbolName = baseVariant.symbolName.hasSuffix(".fill") 
                 ? baseVariant.symbolName 
                 : baseVariant.symbolName + ".fill"
             
-            // Check if this filled variant exists in our list
             if let filledVariant = availableVariants.first(where: { $0.symbolName == fillSymbolName }) {
                 return filledVariant
             }
@@ -105,7 +109,7 @@ struct IconCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Variant indicators outside, above card (always reserve space for alignment)
+            // Variant indicators
             if hasVariants {
                 variantIndicators
             } else {
@@ -115,15 +119,53 @@ struct IconCard: View {
             
             GeometryReader { geometry in
                 ZStack {
-                    // Main card content
                     cardContent(availableSize: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            handleMainAction()
-                        }
+                        #if os(macOS)
+                        .offset(x: swipeOffset)
+                        .background(
+                            ScrollWheelGestureView(
+                                isEnabled: hasVariants && isHovered,
+                                onScroll: { deltaX in
+                                    handleScrollWheel(deltaX: deltaX)
+                                }
+                            )
+                        )
+                        #else
+                        .offset(x: isDragging ? dragOffset : 0)
+                        .gesture(
+                            hasVariants ? 
+                            DragGesture(minimumDistance: 10)
+                                .onChanged { value in
+                                    if !isDragging {
+                                        isDragging = true
+                                    }
+                                    dragOffset = value.translation.width * 0.3
+                                }
+                                .onEnded { value in
+                                    handleSwipeEnd(translation: value.translation.width)
+                                    withAnimation(.spring(duration: 0.3)) {
+                                        dragOffset = 0
+                                        isDragging = false
+                                    }
+                                }
+                            : nil
+                        )
+                        #endif
+                        .simultaneousGesture(
+                            TapGesture()
+                                .onEnded { _ in
+                                    #if os(iOS)
+                                    if !isDragging {
+                                        handleMainAction()
+                                    }
+                                    #else
+                                    handleMainAction()
+                                    #endif
+                                }
+                        )
                     
-                    // Copy feedback overlay
                     if showCopyFeedback {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(.green.opacity(0.2))
@@ -146,19 +188,19 @@ struct IconCard: View {
                     case .ended:
                         isHovered = false
                         onHover(false)
+                        accumulatedDelta = 0
                     }
                 }
                 #endif
             }
             .aspectRatio(1.0, contentMode: .fit)
+            .drawingGroup()
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(strokeColor, lineWidth: strokeWidth)
             )
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-            .animation(.easeInOut(duration: 0.2), value: isSelected)
             
-            // Optional title below card
             if showTitle {
                 Text(displayVariant.symbolName)
                     .font(.callout)
@@ -199,13 +241,111 @@ struct IconCard: View {
         .onChange(of: appSettings.vegasRotationEnabled) { _, _ in
             if vegasMode { restartVegasAnimations() }
         }
-        .onChange(of: currentVariantIndex) { _, _ in
+        .onChange(of: currentVariantIndex) { oldValue, newValue in
+            print("🔄 Variant index changed: \(oldValue) → \(newValue) | Symbol: \(currentVariant.symbolName)")
             onVariantChange(currentVariant.symbolName)
         }
         .onChange(of: isOptionKeyPressed) { _, _ in
-            // Update display when Option key state changes
             onVariantChange(displayVariant.symbolName)
         }
+    }
+    
+    // MARK: - macOS Scroll Handling
+    
+    #if os(macOS)
+    private func handleScrollWheel(deltaX: CGFloat) {
+        let now = Date()
+        let timeSinceLastScroll = now.timeIntervalSince(lastScrollTime)
+        
+        // Reset accumulation if too much time has passed
+        if timeSinceLastScroll > 0.3 {
+            accumulatedDelta = 0
+        }
+        
+        lastScrollTime = now
+        accumulatedDelta += deltaX
+        
+        print("📊 Scroll deltaX: \(deltaX), accumulated: \(accumulatedDelta)")
+        
+        // Visual feedback
+        withAnimation(.interpolatingSpring(duration: 0.2)) {
+            swipeOffset = accumulatedDelta * 0.3
+        }
+        
+        // Threshold for triggering variant change
+        let threshold: CGFloat = 20
+        
+        if abs(accumulatedDelta) >= threshold {
+            print("🎯 Threshold reached! Cycling variant...")
+            
+            if accumulatedDelta < 0 {
+                // Scroll left = next variant
+                cycleVariant(direction: .next)
+            } else {
+                // Scroll right = previous variant
+                cycleVariant(direction: .previous)
+            }
+            
+            // Reset accumulation
+            accumulatedDelta = 0
+            
+            // Reset visual offset
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(150))
+                withAnimation(.spring(duration: 0.3)) {
+                    swipeOffset = 0
+                }
+            }
+        }
+    }
+    #endif
+    
+    // MARK: - iOS Swipe Handling
+    
+    #if os(iOS)
+    private func handleSwipeEnd(translation: CGFloat) {
+        guard hasVariants else { return }
+        
+        let threshold: CGFloat = 30
+        
+        if abs(translation) > threshold {
+            if translation > 0 {
+                cycleVariant(direction: .previous)
+            } else {
+                cycleVariant(direction: .next)
+            }
+            triggerHapticFeedback()
+        }
+    }
+    #endif
+    
+    private func cycleVariant(direction: VariantDirection) {
+        let oldIndex = currentVariantIndex
+        
+        withAnimation(.spring(duration: 0.3, bounce: 0.25)) {
+            switch direction {
+            case .next:
+                currentVariantIndex = (currentVariantIndex + 1) % availableVariants.count
+            case .previous:
+                currentVariantIndex = (currentVariantIndex - 1 + availableVariants.count) % availableVariants.count
+            }
+        }
+        
+        print("🔄 Cycled variant: \(oldIndex) → \(currentVariantIndex) (\(direction))")
+        triggerHapticFeedback()
+    }
+    
+    private func triggerHapticFeedback() {
+        #if os(iOS)
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        #elseif os(macOS)
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        #endif
+    }
+    
+    private enum VariantDirection {
+        case next, previous
     }
     
     // MARK: - Keyboard Monitoring
@@ -218,30 +358,24 @@ struct IconCard: View {
     }
     
     private func stopMonitoringKeyboard() {
-        // Event monitor cleanup happens automatically
+        // Cleanup handled automatically
     }
     #endif
     
     // MARK: - Variant Indicators
     @ViewBuilder
     private var variantIndicators: some View {
-        let nonBaseVariants = availableVariants.enumerated().filter { $0.element.variantType != .base }
-        
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 1) {
-                ForEach(nonBaseVariants, id: \.element.id) { index, variant in
-                    if let badgeIcon = variant.badgeIcon {
-                        let isFillIndicator = variant.variantType == .fill
+                // Find all non-base variants with their ACTUAL indices
+                ForEach(Array(availableVariants.enumerated()), id: \.element.id) { actualIndex, variant in
+                    if variant.variantType != .base, let badgeIcon = variant.badgeIcon {
                         let shouldHighlight: Bool = {
-                            if isFillIndicator {
-                                // Highlight if we're showing any filled version
+                            if variant.variantType == .fill {
                                 return isShowingFill
                             } else if variant.variantType == .badge {
-                                // For badges, only highlight if EXACTLY this badge variant is selected
-                                // Don't strip .fill - we want exact match
                                 return currentVariant.symbolName == variant.symbolName
                             } else {
-                                // For other variants (slash, circle), highlight if this is the selected variant (excluding fills)
                                 let currentBaseName = currentVariant.symbolName.replacingOccurrences(of: ".fill", with: "")
                                 let variantBaseName = variant.symbolName.replacingOccurrences(of: ".fill", with: "")
                                 return currentBaseName == variantBaseName
@@ -251,26 +385,23 @@ struct IconCard: View {
                         VariantIndicatorButton(
                             icon: badgeIcon,
                             isActive: shouldHighlight,
-                            isHovered: hoveredIndicatorIndex == index,
+                            isHovered: hoveredIndicatorIndex == actualIndex,
                             size: indicatorSize,
                             onTap: {
-                                withAnimation(.spring(duration: 0.2)) {
-                                    // If tapping the active variant, deselect it (return to base)
-                                    if index == currentVariantIndex {
+                                print("🎯 Tapped indicator at index \(actualIndex), variant: \(variant.symbolName)")
+                                withAnimation(.spring(duration: 0.3, bounce: 0.25)) {
+                                    if actualIndex == currentVariantIndex {
+                                        // Toggle back to base
                                         currentVariantIndex = 0
                                     } else {
-                                        currentVariantIndex = index
+                                        // Switch to this variant
+                                        currentVariantIndex = actualIndex
                                     }
                                 }
-                                pressStartedOnIndicator = true
-                                
-                                Task {
-                                    try? await Task.sleep(for: .milliseconds(100))
-                                    pressStartedOnIndicator = false
-                                }
+                                triggerHapticFeedback()
                             },
                             onHoverChange: { hovering in
-                                hoveredIndicatorIndex = hovering ? index : nil
+                                hoveredIndicatorIndex = hovering ? actualIndex : nil
                             }
                         )
                     }
@@ -286,7 +417,6 @@ struct IconCard: View {
     
     private var indicatorSize: CGFloat {
         let nonBaseCount = availableVariants.filter { $0.variantType != .base }.count
-        // Make indicators smaller when there are many variants
         if nonBaseCount > 4 {
             return 8 + (gridScale * 3)
         } else {
@@ -319,7 +449,6 @@ struct IconCard: View {
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
         ZStack {
-            // Main symbol
             Image(systemName: displayVariant.symbolName)
                 .font(.system(size: contentSize * 0.65))
                 .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
@@ -331,7 +460,6 @@ struct IconCard: View {
                 .opacity(showCopyFeedback ? 0.2 : 1.0)
                 .id(displayVariant.id)
             
-            // Copy feedback overlay
             if showCopyFeedback {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: contentSize * 0.5))
@@ -436,6 +564,60 @@ struct IconCard: View {
     }
 }
 
+// MARK: - Scroll Wheel Gesture View (macOS)
+
+#if os(macOS)
+private struct ScrollWheelGestureView: NSViewRepresentable {
+    let isEnabled: Bool
+    let onScroll: (CGFloat) -> Void
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = ScrollWheelCaptureView()
+        view.onScroll = onScroll
+        view.isEnabled = isEnabled
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let view = nsView as? ScrollWheelCaptureView {
+            view.isEnabled = isEnabled
+        }
+    }
+    
+    class ScrollWheelCaptureView: NSView {
+        var onScroll: ((CGFloat) -> Void)?
+        var isEnabled: Bool = false
+        
+        override func scrollWheel(with event: NSEvent) {
+            guard isEnabled else {
+                super.scrollWheel(with: event)
+                return
+            }
+            
+            let deltaX = event.scrollingDeltaX
+            
+            // Only handle horizontal scrolling
+            guard abs(deltaX) > abs(event.scrollingDeltaY) else {
+                super.scrollWheel(with: event)
+                return
+            }
+            
+            // Require minimum threshold
+            guard abs(deltaX) > 2 else {
+                super.scrollWheel(with: event)
+                return
+            }
+            
+            print("🖱️ ScrollWheel event: deltaX=\(deltaX), deltaY=\(event.scrollingDeltaY)")
+            
+            onScroll?(deltaX)
+            
+            // Don't call super - consume the event
+        }
+    }
+}
+#endif
+
 // MARK: - Variant Indicator Button Component
 private struct VariantIndicatorButton: View {
     let icon: String
@@ -466,11 +648,22 @@ private struct VariantIndicatorButton: View {
             }
             #endif
             .animation(.spring(duration: 0.2), value: isHovered)
+            .animation(.spring(duration: 0.2), value: isActive)
     }
 }
 
 #Preview {
     VStack(spacing: 20) {
+        #if os(macOS)
+        Text("Hover and use trackpad swipe (two-finger horizontal scroll) to cycle variants")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        #else
+        Text("Swipe left/right on cards to cycle variants")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        #endif
+        
         LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4),
             spacing: 20

@@ -164,6 +164,26 @@ struct AIConfigurationView: View {
                 } footer: {
                     Text("Number of symbol suggestions to generate")
                 }
+                
+                // Two-Stage Expansion
+                Section {
+                    Toggle(isOn: $symbolService.useTwoStageExpansion) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Two-Stage Expansion")
+                            Text("First generates synonyms, then maps all concepts to symbols")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Search Method")
+                } footer: {
+                    if symbolService.useTwoStageExpansion {
+                        Text("Two-stage expansion provides more comprehensive results by first expanding your search term into related concepts, then finding symbols for all of them. This takes longer but finds more relevant symbols.")
+                    } else {
+                        Text("Direct search is faster but may miss related symbols. The AI directly suggests symbols for your search term without expanding it first.")
+                    }
+                }
             }
             .formStyle(.grouped)
             .navigationTitle("AI Configuration")

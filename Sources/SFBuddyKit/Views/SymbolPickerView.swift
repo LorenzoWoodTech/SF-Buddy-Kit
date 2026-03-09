@@ -505,6 +505,7 @@ public struct SymbolPickerView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(Color.purple.opacity(0.3), lineWidth: 1.5)
                                 )
+                                .id("ai-\(suggestion.id)")
                             }
                         }
                         .padding(.horizontal, 16)
@@ -583,6 +584,7 @@ public struct SymbolPickerView: View {
                                 ) {
                                     handleSymbolTap(symbolName)
                                 }
+                                .id("symbol-\(symbolName)")
                             }
                         }
                         .padding(.horizontal, 16)
@@ -595,6 +597,7 @@ public struct SymbolPickerView: View {
                 }
             }
         }
+        .scrollIndicators(.visible, axes: .vertical)
     }
     
     // MARK: - Empty State
