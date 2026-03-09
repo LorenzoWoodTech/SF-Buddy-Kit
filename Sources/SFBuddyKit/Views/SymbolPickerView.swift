@@ -80,12 +80,19 @@ public struct SymbolPickerView: View {
     public var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
             // Sidebar with categories (icon-only)
-            List(SFSymbolCategory.allCases, id: \.rawValue, selection: $selectedCategory) { category in
-                Image(systemName: category.systemImage)
-                    .font(.title3)
-                    .frame(maxWidth: .infinity)
-                    .tag(category)
+            List {
+                ForEach(SFSymbolCategory.allCases, id: \.rawValue) { category in
+                    Button {
+                        selectedCategory = category
+                    } label: {
+                        Image(systemName: category.systemImage)
+                            .font(.title3)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(selectedCategory == category ? Color.accentColor.opacity(0.2) : Color.clear)
                     .help(category.displayName)
+                }
             }
             .listStyle(.sidebar)
             #if os(macOS)
