@@ -27,6 +27,7 @@ public struct SFSymbolBrowserView: View {
     @State private var showingGridSizePopover = false
     @State private var showingVegasSettingsPopover = false
     @State private var showingCategoryFilter = false
+    @State private var showingInfoPopover = false
     @State private var vegasMode = false
     @State private var gridSize: BrowserGridSize = .medium
     
@@ -72,9 +73,9 @@ public struct SFSymbolBrowserView: View {
                         }
                         .help("Toggle Categories")
                         
-                        // Info button showing symbol count
+                        // Info button showing symbol count and current filter/search details
                         Button {
-                            // Could show detailed info about current filter/search
+                            showingInfoPopover.toggle()
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "info.circle")
@@ -86,6 +87,16 @@ public struct SFSymbolBrowserView: View {
                             .foregroundColor(.secondary)
                         }
                         .help("Symbol count: \(filteredSymbols.count)")
+                        .popover(isPresented: $showingInfoPopover) {
+                            BrowserInfoPopover(
+                                shownCount: filteredSymbols.count,
+                                matchingCount: matchingSymbolCount,
+                                totalCount: totalSymbolCount,
+                                selectedCategory: selectedCategory,
+                                searchText: searchText,
+                                renderingMode: selectedRenderingMode
+                            )
+                        }
                     }
                 }
             }
@@ -346,26 +357,46 @@ public struct SFSymbolBrowserView: View {
     }
     
     // MARK: - Enhanced Filtered Symbols with Category Support
-    private var filteredSymbols: [String] {
-        // Get all SF Symbols using SFSafeSymbols
-        let allSymbols = Array(SFSymbol.allSymbols).map { $0.rawValue }
-        var symbols = allSymbols
-        
+
+    /// All available SF Symbols, regardless of the active filters.
+    private var allSymbolNames: [String] {
+        Array(SFSymbol.allSymbols).map { $0.rawValue }
+    }
+
+    /// Symbols matching the current category and search filters, before any
+    /// performance-related truncation is applied.
+    private var matchedSymbols: [String] {
+        var symbols = allSymbolNames
+
         // Apply category filter with enhanced categorization
         if selectedCategory != .all {
             symbols = symbols.filter { symbolName in
                 return symbolBelongsToCategory(symbolName, category: selectedCategory)
             }
         }
-        
+
         // Apply search filter
         if !searchText.isEmpty {
             symbols = symbols.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
-        
+
+        return symbols
+    }
+
+    private var filteredSymbols: [String] {
         // Performance-optimized result limits
         let maxResults = searchText.isEmpty ? 400 : 800
-        return Array(symbols.prefix(maxResults))
+        return Array(matchedSymbols.prefix(maxResults))
+    }
+
+    /// Total number of symbols matching the active filters (un-truncated).
+    private var matchingSymbolCount: Int {
+        matchedSymbols.count
+    }
+
+    /// Total number of SF Symbols available.
+    private var totalSymbolCount: Int {
+        allSymbolNames.count
     }
     
     // MARK: - Enhanced Category Matching
@@ -865,6 +896,79 @@ private struct BrowserColorPickerPopover: View {
         .padding(12)
         .frame(width: 200)
         .background(RoundedRectangle(cornerRadius: 6).fill(.regularMaterial))
+    }
+}
+
+// MARK: - Info Popover (details about the current filter / search)
+private struct BrowserInfoPopover: View {
+    let shownCount: Int
+    let matchingCount: Int
+    let totalCount: Int
+    let selectedCategory: SFSymbolCategory
+    let searchText: String
+    let renderingMode: BrowserRenderingMode
+
+    private var isTruncated: Bool { matchingCount > shownCount }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Browser Info")
+                .font(.caption)
+                .fontWeight(.semibold)
+
+            VStack(alignment: .leading, spacing: 6) {
+                infoRow(icon: "number", title: "Showing", value: "\(shownCount) of \(matchingCount)")
+
+                if isTruncated {
+                    Text("Results limited for performance. Refine your search to see more.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                infoRow(icon: "square.grid.3x3", title: "Total available", value: "\(totalCount)")
+
+                Divider()
+
+                infoRow(
+                    icon: selectedCategory.systemImage,
+                    title: "Category",
+                    value: selectedCategory.displayName
+                )
+
+                infoRow(
+                    icon: "magnifyingglass",
+                    title: "Search",
+                    value: searchText.isEmpty ? "—" : "\"\(searchText)\""
+                )
+
+                infoRow(
+                    icon: renderingMode.iconName,
+                    title: "Rendering",
+                    value: renderingMode.displayName
+                )
+            }
+        }
+        .padding(12)
+        .frame(width: 230)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func infoRow(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundColor(.accentColor)
+                .frame(width: 16)
+            Text(title)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .multilineTextAlignment(.trailing)
+        }
     }
 }
 
