@@ -15,7 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/SFSafeSymbols/SFSafeSymbols", from: "6.2.0"),
-        .package(path: "../LorenzoKit")
+        .package(url: "https://github.com/LorenzoWoodTech/LorenzoKit.git", branch: "main")
     ],
     targets: [
         .target(

@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "lorenzokit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/LorenzoWoodTech/LorenzoKit.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "dda45f158bfe254eccf8877b0e69e01ac21f77af"
+      }
+    },
+    {
       "identity" : "sfsafesymbols",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SFSafeSymbols/SFSafeSymbols",
