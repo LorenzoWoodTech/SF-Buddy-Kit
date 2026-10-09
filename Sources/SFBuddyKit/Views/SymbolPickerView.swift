@@ -7,32 +7,12 @@
 
 import SwiftUI
 import SFSafeSymbols
+import LorenzoKit
 #if os(macOS)
 import AppKit
 #elseif os(iOS)
 import UIKit
 #endif
-
-// MARK: - Liquid Glass Effect Extension
-private extension View {
-    @ViewBuilder
-    func liquidGlassEffect() -> some View {
-        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, watchOS 26.0, *) {
-            self.glassEffect()
-        } else {
-            self.background(.ultraThinMaterial)
-        }
-    }
-    
-    @ViewBuilder
-    func liquidGlassEffect(in shape: some Shape) -> some View {
-        if #available(iOS 26.0, macOS 26.0, tvOS 26.0, watchOS 26.0, *) {
-            self.glassEffect(in: shape)
-        } else {
-            self.background(.ultraThinMaterial, in: shape)
-        }
-    }
-}
 
 public struct SymbolPickerView: View {
     @Binding var selectedSymbol: String?
@@ -55,6 +35,8 @@ public struct SymbolPickerView: View {
     @State private var showingSettings = false
     @State private var showingInlineConfig = false
     @State private var groupVariants = false
+    @State private var showingInfo = false
+    @State private var matchedSymbolCount = 0
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -318,6 +300,24 @@ public struct SymbolPickerView: View {
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             
             Spacer()
+
+            Button {
+                showingInfo.toggle()
+            } label: {
+                Image(systemName: "info")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .frame(height: controlHeight)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
+            .help("Showing \(debouncedFilteredSymbols.count) symbols")
+            .popover(isPresented: $showingInfo) {
+                infoPopover
+            }
             
             // Options Menu (ellipsis)
             Menu {
@@ -388,10 +388,13 @@ public struct SymbolPickerView: View {
                 }
                 
                 #if os(macOS)
-                Button {
-                    NSApplication.shared.terminate(nil)
-                } label: {
-                    Label("Quit SF Buddy", systemImage: "power")
+                // Picker mode is the standalone SF Buddy app; hosted, this would quit the host.
+                if mode == .picker {
+                    Button {
+                        NSApplication.shared.terminate(nil)
+                    } label: {
+                        Label("Quit SF Buddy", systemImage: "power")
+                    }
                 }
                 #endif
             } label: {
@@ -416,6 +419,28 @@ public struct SymbolPickerView: View {
         .animation(.spring(duration: 0.3), value: symbolService.currentRenderingMode.supportsColorCustomization)
     }
     
+    // MARK: - Info Popover
+    private var infoPopover: some View {
+        Form {
+            Section {
+                LabeledContent("Showing", value: "\(debouncedFilteredSymbols.count) of \(matchedSymbolCount)")
+                LabeledContent("Total Available", value: "\(SFSymbol.allSymbols.count)")
+            } footer: {
+                if matchedSymbolCount > debouncedFilteredSymbols.count {
+                    Text("Results limited for performance. Refine your search to see more.")
+                }
+            }
+            Section {
+                LabeledContent("Category", value: selectedCategory.displayName)
+                LabeledContent("Search", value: searchText.isEmpty ? "—" : "“\(searchText)”")
+                LabeledContent("Rendering", value: symbolService.currentRenderingMode.displayName)
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 280)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     // MARK: - Color Palette Data
     private var colorPaletteFirstRow: [(String, Color)] {
         [
@@ -827,6 +852,7 @@ public struct SymbolPickerView: View {
             symbols = symbols.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
         
+        matchedSymbolCount = symbols.count
         let maxResults = searchText.isEmpty ? 400 : 800
         let limitedSymbols = Array(symbols.prefix(maxResults))
         
