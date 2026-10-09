@@ -60,7 +60,7 @@ public struct SymbolPickerView: View {
     }
 
     public var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        NavigationSplitView(columnVisibility: .constant(.all), preferredCompactColumn: .constant(.detail)) {
             // Sidebar with categories (icon-only)
             List {
                 ForEach(SFSymbolCategory.allCases, id: \.rawValue) { category in
@@ -119,6 +119,14 @@ public struct SymbolPickerView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 #endif
                 .toolbar(removing: .sidebarToggle)
+                .toolbar {
+                    // Browser mode is presented (a sheet); picker mode is the app's own window.
+                    if mode == .browser && showDismissButton {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel", role: .cancel) { dismiss() }
+                        }
+                    }
+                }
         }
         .navigationSplitViewStyle(.prominentDetail)
     }
