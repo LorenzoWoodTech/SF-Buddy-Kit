@@ -14,6 +14,8 @@ import UIKit
 
 struct IconCard: View {
     let symbolName: String
+    /// A host asset-catalog name, drawn with `Image(_:)` instead of `Image(systemName:)`.
+    let isCustom: Bool
     let isSelected: Bool
     let symbolColor: Color
     let vegasMode: Bool
@@ -83,6 +85,7 @@ struct IconCard: View {
     
     init(
         symbolName: String,
+        isCustom: Bool = false,
         isSelected: Bool = false,
         symbolColor: Color = .primary,
         vegasMode: Bool = false,
@@ -95,6 +98,7 @@ struct IconCard: View {
         action: @escaping () -> Void
     ) {
         self.symbolName = symbolName
+        self.isCustom = isCustom
         self.isSelected = isSelected
         self.symbolColor = symbolColor
         self.vegasMode = vegasMode
@@ -449,8 +453,7 @@ struct IconCard: View {
         let contentSize = min(availableSize.width, availableSize.height) - (padding * 2)
         
         ZStack {
-            Image(systemName: displayVariant.symbolName)
-                .font(.system(size: contentSize * 0.65))
+            glyph(size: contentSize * 0.65)
                 .foregroundColor(isSelected ? .accentColor : (vegasMode ? randomColor : symbolColor))
                 .symbolRenderingMode(renderingMode.swiftUIMode)
                 .scaleEffect(vegasMode ? animationScale : 1)
@@ -472,6 +475,21 @@ struct IconCard: View {
         .padding(padding)
     }
     
+    @ViewBuilder
+    private func glyph(size: CGFloat) -> some View {
+        if isCustom {
+            // A catalog image set has no font size, so it is fitted to the glyph's box.
+            Image(displayVariant.symbolName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+        } else {
+            Image(systemName: displayVariant.symbolName)
+                .font(.system(size: size))
+        }
+    }
+
     // MARK: - Computed Properties
     private var cardPadding: CGFloat {
         8 + (gridScale * 8)

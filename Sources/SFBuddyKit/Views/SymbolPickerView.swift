@@ -16,6 +16,7 @@ import UIKit
 
 public struct SymbolPickerView: View {
     @Binding var selectedSymbol: String?
+    @Binding var selectedCustomSymbol: String?
     @Environment(\.dismiss) private var dismiss
     @StateObject private var symbolService = SFSymbolService.shared
     @Environment(VegasSettings.self) private var appSettings
@@ -37,9 +38,13 @@ public struct SymbolPickerView: View {
     @State private var groupVariants = false
     @State private var showingInfo = false
     @State private var matchedSymbolCount = 0
+    /// Whether `debouncedFilteredSymbols` holds custom names, set with the list
+    /// so a card never draws a name through the wrong `Image` initializer.
+    @State private var listingCustomSymbols = false
     
     private let showDismissButton: Bool
     private let mode: PickerMode
+    private let customSymbols: [String]
     
     // Control height constant
     private let controlHeight: CGFloat = 20
@@ -49,21 +54,30 @@ public struct SymbolPickerView: View {
         case picker  // Copy to clipboard
     }
     
+    /// - Parameters:
+    ///   - customSymbols: The host's own asset-catalog image or symbol names,
+    ///     listed in a Custom category and drawn with `Image(_:)`. Empty hides it.
+    ///   - selectedCustomSymbol: Where a custom pick is written. Its own binding,
+    ///     because a catalog asset may share a name with an SF Symbol.
     public init(
         selectedSymbol: Binding<String?> = .constant(nil),
         showDismissButton: Bool = true,
-        mode: PickerMode = .picker
+        mode: PickerMode = .picker,
+        customSymbols: [String] = [],
+        selectedCustomSymbol: Binding<String?> = .constant(nil)
     ) {
         self._selectedSymbol = selectedSymbol
+        self._selectedCustomSymbol = selectedCustomSymbol
         self.showDismissButton = showDismissButton
         self.mode = mode
+        self.customSymbols = customSymbols
     }
 
     public var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all), preferredCompactColumn: .constant(.detail)) {
             // Sidebar with categories (icon-only)
             List {
-                ForEach(SFSymbolCategory.allCases, id: \.rawValue) { category in
+                ForEach(SFSymbolCategory.visibleCases(hasCustomSymbols: !customSymbols.isEmpty), id: \.rawValue) { category in
                     Button {
                         selectedCategory = category
                     } label: {
@@ -603,13 +617,14 @@ public struct SymbolPickerView: View {
                             ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
                                 IconCard(
                                     symbolName: symbolName,
-                                    isSelected: selectedSymbol == symbolName,
+                                    isCustom: listingCustomSymbols,
+                                    isSelected: (listingCustomSymbols ? selectedCustomSymbol : selectedSymbol) == symbolName,
                                     symbolColor: selectedColor,
                                     vegasMode: vegasMode,
                                     gridScale: gridScale,
                                     renderingMode: symbolService.currentRenderingMode,
                                     showTitle: showTitles,
-                                    availableVariants: groupVariants ? getAvailableVariants(for: symbolName) : [],
+                                    availableVariants: groupVariants && !listingCustomSymbols ? getAvailableVariants(for: symbolName) : [],
                                     onHover: { isHovering in
                                         if isHovering {
                                             hoveredSymbolName = symbolName
@@ -622,7 +637,7 @@ public struct SymbolPickerView: View {
                                         hoveredSymbolName = variant
                                     }
                                 ) {
-                                    handleSymbolTap(symbolName)
+                                    handleSymbolTap(symbolName, isCustom: listingCustomSymbols)
                                 }
                                 .id("symbol-\(symbolName)")
                             }
@@ -789,7 +804,7 @@ public struct SymbolPickerView: View {
     }
     
     // MARK: - Symbol Handling
-    private func handleSymbolTap(_ symbolName: String) {
+    private func handleSymbolTap(_ symbolName: String, isCustom: Bool = false) {
         // Use the currently selected variant from hoveredSymbolName
         let actualSymbolName = hoveredSymbolName ?? symbolName
         
@@ -797,7 +812,11 @@ public struct SymbolPickerView: View {
         
         switch mode {
         case .browser:
-            selectedSymbol = actualSymbolName
+            if isCustom {
+                selectedCustomSymbol = actualSymbolName
+            } else {
+                selectedSymbol = actualSymbolName
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 dismiss()
             }
@@ -831,39 +850,61 @@ public struct SymbolPickerView: View {
     // MARK: - Async Filtering
     @MainActor
     private func updateFilteredSymbols() async {
-        let allSymbols = SFSymbol.allSymbols.map { $0.rawValue }
-        var symbols = allSymbols
-        
-        // Filter out variants from main list only if grouping is enabled
-        if groupVariants {
+        let listing = Self.listing(
+            category: selectedCategory,
+            searchText: searchText,
+            groupVariants: groupVariants,
+            customSymbols: customSymbols
+        )
+        matchedSymbolCount = listing.matchedCount
+        debouncedFilteredSymbols = listing.symbols
+        listingCustomSymbols = selectedCategory == .custom
+    }
+
+    /// The grid's names for a category and search: SF Symbols, or in the
+    /// Custom category the host's names, which skip the variant filters (a
+    /// catalog name with `.fill` or `.badge` is its own icon) and the cap.
+    static func listing(
+        category: SFSymbolCategory,
+        searchText: String,
+        groupVariants: Bool,
+        customSymbols: [String]
+    ) -> (symbols: [String], matchedCount: Int) {
+        let isCustom = category == .custom
+        var symbols = isCustom ? customSymbols : SFSymbol.allSymbols.map { $0.rawValue }
+
+        if !isCustom {
+            // Filter out variants from main list only if grouping is enabled
+            if groupVariants {
+                symbols = symbols.filter { symbolName in
+                    !symbolName.hasSuffix(".fill") &&
+                    !symbolName.contains(".badge") &&
+                    !symbolName.hasSuffix(".slash") &&
+                    !symbolName.hasSuffix(".circle") &&
+                    !symbolName.hasSuffix(".circle.fill")
+                }
+            }
+
+            // Filter out fill and badge variants from main list
             symbols = symbols.filter { symbolName in
-                !symbolName.hasSuffix(".fill") && 
-                !symbolName.contains(".badge") && 
-                !symbolName.hasSuffix(".slash") &&
-                !symbolName.hasSuffix(".circle") &&
-                !symbolName.hasSuffix(".circle.fill")
+                !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
+            }
+
+            if category != .all {
+                symbols = symbols.filter { symbolName in
+                    symbolBelongsToCategory(symbolName, category: category)
+                }
             }
         }
 
-        // Filter out fill and badge variants from main list
-        symbols = symbols.filter { symbolName in
-            !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
-        }
-        
-        if selectedCategory != .all {
-            symbols = symbols.filter { symbolName in
-                symbolBelongsToCategory(symbolName, category: selectedCategory)
-            }
-        }
-        
         if !searchText.isEmpty {
             symbols = symbols.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
-        
-        matchedSymbolCount = symbols.count
-        let maxResults = searchText.isEmpty ? 400 : 800
+
+        let matchedCount = symbols.count
+        let maxResults = isCustom ? matchedCount : (searchText.isEmpty ? 400 : 800)
         let limitedSymbols = Array(symbols.prefix(maxResults))
-        
+
         // Smart sorting by relevance when searching, otherwise by dot count and alphabetically
         if !searchText.isEmpty {
             let sorted = limitedSymbols.sorted { symbol1, symbol2 in
@@ -871,23 +912,23 @@ public struct SymbolPickerView: View {
                 let score2 = symbolRelevanceScore(symbol2, searchTerm: searchText)
                 return score1 > score2
             }
-            debouncedFilteredSymbols = sorted
+            return (sorted, matchedCount)
         } else {
             // Sort by dot count first, then alphabetically
             let sorted = limitedSymbols.sorted { symbol1, symbol2 in
                 let dots1 = symbol1.filter { $0 == "." }.count
                 let dots2 = symbol2.filter { $0 == "." }.count
-                
+
                 if dots1 != dots2 {
                     return dots1 < dots2
                 } else {
                     return symbol1.localizedStandardCompare(symbol2) == .orderedAscending
                 }
             }
-            debouncedFilteredSymbols = sorted
+            return (sorted, matchedCount)
         }
     }
-    
+
     // MARK: - Variant Detection
     private func getAvailableVariants(for symbolName: String) -> [SymbolVariant] {
         var variants: [SymbolVariant] = []
@@ -996,7 +1037,7 @@ public struct SymbolPickerView: View {
     }
     
     // MARK: - Relevance Scoring
-    private func symbolRelevanceScore(_ symbol: String, searchTerm: String) -> Int {
+    private static func symbolRelevanceScore(_ symbol: String, searchTerm: String) -> Int {
         var score = 0
         let lower = symbol.lowercased()
         let search = searchTerm.lowercased()
@@ -1048,10 +1089,12 @@ public struct SymbolPickerView: View {
     }
     
     // MARK: - Category Matching
-    private func symbolBelongsToCategory(_ symbolName: String, category: SFSymbolCategory) -> Bool {
+    private static func symbolBelongsToCategory(_ symbolName: String, category: SFSymbolCategory) -> Bool {
         switch category {
         case .all:
             return true
+        case .custom:
+            return false
         case .communication:
             return symbolName.contains("message") || symbolName.contains("phone") ||
                    symbolName.contains("mail") || symbolName.contains("bubble") ||
@@ -1143,6 +1186,7 @@ public struct SymbolPickerView: View {
 // MARK: - SF Symbol Categories
 enum SFSymbolCategory: String, CaseIterable {
     case all = "All"
+    case custom = "Custom"
     case communication = "Communication"
     case weather = "Weather"
     case objectsTools = "Objects & Tools"
@@ -1172,10 +1216,16 @@ enum SFSymbolCategory: String, CaseIterable {
     var displayName: String {
         rawValue
     }
+
+    /// The sidebar's categories: Custom only when the host supplied names.
+    static func visibleCases(hasCustomSymbols: Bool) -> [SFSymbolCategory] {
+        allCases.filter { $0 != .custom || hasCustomSymbols }
+    }
     
     var systemImage: String {
         switch self {
         case .all: return "square.grid.3x3"
+        case .custom: return "star.square.on.square"
         case .communication: return "bubble.left.and.bubble.right"
         case .weather: return "cloud.sun"
         case .objectsTools: return "wrench.and.screwdriver"
