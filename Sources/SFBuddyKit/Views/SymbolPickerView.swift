@@ -38,9 +38,8 @@ public struct SymbolPickerView: View {
     @State private var groupVariants = false
     @State private var showingInfo = false
     @State private var matchedSymbolCount = 0
-    /// Whether `debouncedFilteredSymbols` holds custom names, set with the list
-    /// so a card never draws a name through the wrong `Image` initializer.
-    @State private var listingCustomSymbols = false
+    /// The host's `customSymbols` the grid shows, ahead of `debouncedFilteredSymbols`.
+    @State private var debouncedCustomSymbols: [String] = []
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -56,7 +55,8 @@ public struct SymbolPickerView: View {
     
     /// - Parameters:
     ///   - customSymbols: The host's own asset-catalog image or symbol names,
-    ///     listed in a Custom category and drawn with `Image(_:)`. Empty hides it.
+    ///     drawn with `Image(_:)`, leading the All grid and alone in a Custom
+    ///     category. Empty hides the category.
     ///   - selectedCustomSymbol: Where a custom pick is written. Its own binding,
     ///     because a catalog asset may share a name with an SF Symbol.
     public init(
@@ -336,7 +336,7 @@ public struct SymbolPickerView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
-            .help("Showing \(debouncedFilteredSymbols.count) symbols")
+            .help("Showing \(shownSymbolCount) symbols")
             .popover(isPresented: $showingInfo) {
                 infoPopover
             }
@@ -445,10 +445,10 @@ public struct SymbolPickerView: View {
     private var infoPopover: some View {
         Form {
             Section {
-                LabeledContent("Showing", value: "\(debouncedFilteredSymbols.count) of \(matchedSymbolCount)")
+                LabeledContent("Showing", value: "\(shownSymbolCount) of \(matchedSymbolCount)")
                 LabeledContent("Total Available", value: "\(SFSymbol.allSymbols.count)")
             } footer: {
-                if matchedSymbolCount > debouncedFilteredSymbols.count {
+                if matchedSymbolCount > shownSymbolCount {
                     Text("Results limited for performance. Refine your search to see more.")
                 }
             }
@@ -589,7 +589,7 @@ public struct SymbolPickerView: View {
                 }
                 
                 // All/Filtered Symbols Section
-                if !debouncedFilteredSymbols.isEmpty {
+                if shownSymbolCount > 0 {
                     VStack(alignment: .leading, spacing: 8) {
                         if !aiSuggestedSymbols.isEmpty {
                             HStack {
@@ -597,16 +597,16 @@ public struct SymbolPickerView: View {
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.secondary)
-                                
+
                                 Spacer()
-                                
-                                Text("\(debouncedFilteredSymbols.count) symbols")
+
+                                Text("\(shownSymbolCount) symbols")
                                     .font(.caption2)
                                     .foregroundColor(.secondary.opacity(0.6))
                             }
                             .padding(.horizontal, 16)
                         }
-                        
+
                         LazyVGrid(
                             columns: Array(
                                 repeating: GridItem(.flexible(), spacing: 10),
@@ -614,32 +614,12 @@ public struct SymbolPickerView: View {
                             ),
                             spacing: 20
                         ) {
+                            // Two ForEach, so a custom name that is also an SF Symbol's keeps its own card.
+                            ForEach(debouncedCustomSymbols, id: \.self) { symbolName in
+                                symbolCard(symbolName, isCustom: true)
+                            }
                             ForEach(debouncedFilteredSymbols, id: \.self) { symbolName in
-                                IconCard(
-                                    symbolName: symbolName,
-                                    isCustom: listingCustomSymbols,
-                                    isSelected: (listingCustomSymbols ? selectedCustomSymbol : selectedSymbol) == symbolName,
-                                    symbolColor: selectedColor,
-                                    vegasMode: vegasMode,
-                                    gridScale: gridScale,
-                                    renderingMode: symbolService.currentRenderingMode,
-                                    showTitle: showTitles,
-                                    availableVariants: groupVariants && !listingCustomSymbols ? getAvailableVariants(for: symbolName) : [],
-                                    onHover: { isHovering in
-                                        if isHovering {
-                                            hoveredSymbolName = symbolName
-                                            justCopiedSymbolName = nil
-                                        } else {
-                                            hoveredSymbolName = nil
-                                        }
-                                    },
-                                    onVariantChange: { variant in
-                                        hoveredSymbolName = variant
-                                    }
-                                ) {
-                                    handleSymbolTap(symbolName, isCustom: listingCustomSymbols)
-                                }
-                                .id("symbol-\(symbolName)")
+                                symbolCard(symbolName, isCustom: false)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -654,7 +634,35 @@ public struct SymbolPickerView: View {
         }
         .scrollIndicators(.visible, axes: .vertical)
     }
-    
+
+    private func symbolCard(_ symbolName: String, isCustom: Bool) -> some View {
+        IconCard(
+            symbolName: symbolName,
+            isCustom: isCustom,
+            isSelected: (isCustom ? selectedCustomSymbol : selectedSymbol) == symbolName,
+            symbolColor: selectedColor,
+            vegasMode: vegasMode,
+            gridScale: gridScale,
+            renderingMode: symbolService.currentRenderingMode,
+            showTitle: showTitles,
+            availableVariants: groupVariants && !isCustom ? getAvailableVariants(for: symbolName) : [],
+            onHover: { isHovering in
+                if isHovering {
+                    hoveredSymbolName = symbolName
+                    justCopiedSymbolName = nil
+                } else {
+                    hoveredSymbolName = nil
+                }
+            },
+            onVariantChange: { variant in
+                hoveredSymbolName = variant
+            }
+        ) {
+            handleSymbolTap(symbolName, isCustom: isCustom)
+        }
+        .id(isCustom ? "custom-\(symbolName)" : "symbol-\(symbolName)")
+    }
+
     // MARK: - Empty State
     private var emptyStateView: some View {
         VStack(spacing: 20) {
@@ -846,7 +854,11 @@ public struct SymbolPickerView: View {
     private var totalSymbolCount: Int {
         aiSuggestedSymbols.count + debouncedFilteredSymbols.count
     }
-    
+
+    private var shownSymbolCount: Int {
+        debouncedCustomSymbols.count + debouncedFilteredSymbols.count
+    }
+
     // MARK: - Async Filtering
     @MainActor
     private func updateFilteredSymbols() async {
@@ -857,43 +869,48 @@ public struct SymbolPickerView: View {
             customSymbols: customSymbols
         )
         matchedSymbolCount = listing.matchedCount
+        debouncedCustomSymbols = listing.custom
         debouncedFilteredSymbols = listing.symbols
-        listingCustomSymbols = selectedCategory == .custom
     }
 
-    /// The grid's names for a category and search: SF Symbols, or in the
-    /// Custom category the host's names, which skip the variant filters (a
-    /// catalog name with `.fill` or `.badge` is its own icon) and the cap.
+    /// The grid's names for a category and search. The host's custom names
+    /// lead All and are the whole of Custom (no other category's name rules fit
+    /// them); they skip the variant filters, since a catalog name with `.fill`
+    /// or `.badge` is its own icon, and the result cap.
     static func listing(
         category: SFSymbolCategory,
         searchText: String,
         groupVariants: Bool,
         customSymbols: [String]
-    ) -> (symbols: [String], matchedCount: Int) {
-        let isCustom = category == .custom
-        var symbols = isCustom ? customSymbols : SFSymbol.allSymbols.map { $0.rawValue }
+    ) -> (custom: [String], symbols: [String], matchedCount: Int) {
+        var custom = category == .all || category == .custom ? customSymbols : []
+        if !searchText.isEmpty {
+            custom = custom.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+        custom = sorted(custom, searchText: searchText)
+        guard category != .custom else { return (custom, [], custom.count) }
 
-        if !isCustom {
-            // Filter out variants from main list only if grouping is enabled
-            if groupVariants {
-                symbols = symbols.filter { symbolName in
-                    !symbolName.hasSuffix(".fill") &&
-                    !symbolName.contains(".badge") &&
-                    !symbolName.hasSuffix(".slash") &&
-                    !symbolName.hasSuffix(".circle") &&
-                    !symbolName.hasSuffix(".circle.fill")
-                }
-            }
+        var symbols = SFSymbol.allSymbols.map { $0.rawValue }
 
-            // Filter out fill and badge variants from main list
+        // Filter out variants from main list only if grouping is enabled
+        if groupVariants {
             symbols = symbols.filter { symbolName in
-                !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
+                !symbolName.hasSuffix(".fill") &&
+                !symbolName.contains(".badge") &&
+                !symbolName.hasSuffix(".slash") &&
+                !symbolName.hasSuffix(".circle") &&
+                !symbolName.hasSuffix(".circle.fill")
             }
+        }
 
-            if category != .all {
-                symbols = symbols.filter { symbolName in
-                    symbolBelongsToCategory(symbolName, category: category)
-                }
+        // Filter out fill and badge variants from main list
+        symbols = symbols.filter { symbolName in
+            !symbolName.hasSuffix(".fill") && !symbolName.contains(".badge")
+        }
+
+        if category != .all {
+            symbols = symbols.filter { symbolName in
+                symbolBelongsToCategory(symbolName, category: category)
             }
         }
 
@@ -901,21 +918,22 @@ public struct SymbolPickerView: View {
             symbols = symbols.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
 
-        let matchedCount = symbols.count
-        let maxResults = isCustom ? matchedCount : (searchText.isEmpty ? 400 : 800)
+        let maxResults = searchText.isEmpty ? 400 : 800
         let limitedSymbols = Array(symbols.prefix(maxResults))
+        return (custom, sorted(limitedSymbols, searchText: searchText), custom.count + symbols.count)
+    }
 
-        // Smart sorting by relevance when searching, otherwise by dot count and alphabetically
+    /// Smart sorting by relevance when searching, otherwise by dot count and alphabetically
+    private static func sorted(_ symbols: [String], searchText: String) -> [String] {
         if !searchText.isEmpty {
-            let sorted = limitedSymbols.sorted { symbol1, symbol2 in
+            return symbols.sorted { symbol1, symbol2 in
                 let score1 = symbolRelevanceScore(symbol1, searchTerm: searchText)
                 let score2 = symbolRelevanceScore(symbol2, searchTerm: searchText)
                 return score1 > score2
             }
-            return (sorted, matchedCount)
         } else {
             // Sort by dot count first, then alphabetically
-            let sorted = limitedSymbols.sorted { symbol1, symbol2 in
+            return symbols.sorted { symbol1, symbol2 in
                 let dots1 = symbol1.filter { $0 == "." }.count
                 let dots2 = symbol2.filter { $0 == "." }.count
 
@@ -925,7 +943,6 @@ public struct SymbolPickerView: View {
                     return symbol1.localizedStandardCompare(symbol2) == .orderedAscending
                 }
             }
-            return (sorted, matchedCount)
         }
     }
 
