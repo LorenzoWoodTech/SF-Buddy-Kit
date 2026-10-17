@@ -58,7 +58,8 @@ public struct SymbolPickerView: View {
     ///     drawn with `Image(_:)`, leading the All grid and alone in a Custom
     ///     category. Empty hides the category.
     ///   - selectedCustomSymbol: Where a custom pick is written. Its own binding,
-    ///     because a catalog asset may share a name with an SF Symbol.
+    ///     because a catalog asset may share a name with an SF Symbol. A pick of
+    ///     either kind sets the other binding to nil.
     public init(
         selectedSymbol: Binding<String?> = .constant(nil),
         showDismissButton: Bool = true,
@@ -190,6 +191,12 @@ public struct SymbolPickerView: View {
             }
         }
         .onChange(of: selectedCategory) { _, _ in
+            filterTask?.cancel()
+            filterTask = Task {
+                await updateFilteredSymbols()
+            }
+        }
+        .onChange(of: customSymbols) { _, _ in
             filterTask?.cancel()
             filterTask = Task {
                 await updateFilteredSymbols()
@@ -813,16 +820,18 @@ public struct SymbolPickerView: View {
     
     // MARK: - Symbol Handling
     private func handleSymbolTap(_ symbolName: String, isCustom: Bool = false) {
-        // Use the currently selected variant from hoveredSymbolName
-        let actualSymbolName = hoveredSymbolName ?? symbolName
+        let actualSymbolName = Self.pickedName(symbolName, isCustom: isCustom, hoveredSymbolName: hoveredSymbolName)
         
         print("[SymbolPickerView] handleSymbolTap called with: \(actualSymbolName)")
         
         switch mode {
         case .browser:
+            // One pick, one selection: clear the other binding first, then write this one.
             if isCustom {
+                selectedSymbol = nil
                 selectedCustomSymbol = actualSymbolName
             } else {
+                selectedCustomSymbol = nil
                 selectedSymbol = actualSymbolName
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -853,6 +862,12 @@ public struct SymbolPickerView: View {
     
     private var totalSymbolCount: Int {
         aiSuggestedSymbols.count + debouncedFilteredSymbols.count
+    }
+
+    /// The name a tap picks: an SF card's swiped or hovered variant (`hoveredSymbolName`, shared
+    /// by every card), but a custom card's own name, since it has no variants.
+    static func pickedName(_ symbolName: String, isCustom: Bool, hoveredSymbolName: String?) -> String {
+        isCustom ? symbolName : (hoveredSymbolName ?? symbolName)
     }
 
     private var shownSymbolCount: Int {

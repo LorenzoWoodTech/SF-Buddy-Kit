@@ -42,6 +42,13 @@ struct CustomSymbolListingTests {
         #expect(listing.symbols.count == 400)
     }
 
+    /// The hover name is shared across cards, so a custom pick must not read it.
+    @Test func customPickIgnoresTheHoveredVariant() {
+        #expect(SymbolPickerView.pickedName("custom.mixer", isCustom: true, hoveredSymbolName: "star.fill") == "custom.mixer")
+        #expect(SymbolPickerView.pickedName("star", isCustom: false, hoveredSymbolName: "star.fill") == "star.fill")
+        #expect(SymbolPickerView.pickedName("star", isCustom: false, hoveredSymbolName: nil) == "star")
+    }
+
     @Test func customCategoryShowsOnlyWithNames() {
         #expect(!SFSymbolCategory.visibleCases(hasCustomSymbols: false).contains(.custom))
         #expect(SFSymbolCategory.visibleCases(hasCustomSymbols: true).contains(.custom))
