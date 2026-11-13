@@ -37,6 +37,7 @@ public struct SymbolPickerView: View {
     @State private var groupVariants = false
     @State private var showingInfo = false
     @State private var matchedSymbolCount = 0
+    @State private var isSidebarCompact = false
     
     private let showDismissButton: Bool
     private let mode: PickerMode
@@ -62,25 +63,22 @@ public struct SymbolPickerView: View {
     public var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all), preferredCompactColumn: .constant(.detail)) {
             // Sidebar with categories (icon-only)
-            List {
-                ForEach(SFSymbolCategory.allCases, id: \.rawValue) { category in
-                    Button {
-                        selectedCategory = category
-                    } label: {
-                        Image(systemName: category.systemImage)
-                            .font(.title3)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.plain)
-                    .listRowBackground(selectedCategory == category ? Color.accentColor.opacity(0.2) : Color.clear)
-                    .help(category.displayName)
+            List(selection: Binding<SFSymbolCategory?>(
+                get: { selectedCategory },
+                set: { if let category = $0 { selectedCategory = category } }
+            )) {
+                ForEach(SFSymbolCategory.allCases, id: \.self) { category in
+                    Label(category.displayName, systemImage: category.systemImage)
+                        .help(category.displayName)
                 }
             }
             .listStyle(.sidebar)
+            // Dragged narrow, the sidebar drops its titles and keeps the glyphs.
+            .labelStyle(SidebarLabelStyle(isCompact: isSidebarCompact))
+            .onGeometryChange(for: Bool.self) { $0.size.width < 120 } action: { isSidebarCompact = $0 }
             #if os(macOS)
-            .navigationSplitViewColumnWidth(min: 50, ideal: 50, max: 50)
+            .navigationSplitViewColumnWidth(min: 56, ideal: 180, max: 280)
             #endif
-            .safeAreaPadding(.vertical, 8)
         } detail: {
             // Main content area - ScrollView with floating toolbar
             symbolGridView
@@ -207,7 +205,7 @@ public struct SymbolPickerView: View {
     private var controlBar: some View {
         HStack(spacing: 12) {
             // Rendering Mode + Color Palette in one glass island
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
                 // Rendering Mode Menu
                 Menu {
                     ForEach(SymbolRenderingMode.allCases) { mode in
@@ -240,6 +238,8 @@ public struct SymbolPickerView: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(height: controlHeight)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -279,14 +279,15 @@ public struct SymbolPickerView: View {
                         Circle()
                             .fill(selectedColor)
                             .frame(width: 16, height: 16)
+                            .frame(height: controlHeight)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             
             // Grid size slider with icons
@@ -316,11 +317,11 @@ public struct SymbolPickerView: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .frame(height: controlHeight)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             .help("Showing \(debouncedFilteredSymbols.count) symbols")
             .popover(isPresented: $showingInfo) {
@@ -410,12 +411,13 @@ public struct SymbolPickerView: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .frame(height: controlHeight)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
                     .contentShape(Rectangle())
             }
             .menuIndicator(.hidden)
             .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .fixedSize()
             .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             .help("Display options")
             .sheet(isPresented: $showingSettings) {
@@ -1141,6 +1143,19 @@ public struct SymbolPickerView: View {
 }
 
 // MARK: - SF Symbol Categories
+/// Title and icon, or the icon alone (still titled for VoiceOver) once the sidebar is dragged narrow.
+private struct SidebarLabelStyle: LabelStyle {
+    let isCompact: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if isCompact {
+            Label(configuration).labelStyle(.iconOnly)
+        } else {
+            Label(configuration)
+        }
+    }
+}
+
 enum SFSymbolCategory: String, CaseIterable {
     case all = "All"
     case communication = "Communication"

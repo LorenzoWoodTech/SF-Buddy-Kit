@@ -194,7 +194,9 @@ struct IconCard: View {
                 #endif
             }
             .aspectRatio(1.0, contentMode: .fit)
-            .drawingGroup()
+            // No `.drawingGroup()`: the macOS scroll-wheel catcher is an
+            // NSView, which Metal flattening can't draw — every card rendered
+            // as SwiftUI's yellow "unsupported content" placeholder.
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(strokeColor, lineWidth: strokeWidth)
